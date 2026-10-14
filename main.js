@@ -611,33 +611,11 @@ gl_FragColor=vec4(col,1.);}`;
   setC("email", C.email, C.email && "mailto:" + C.email);
 
   /* ---------------------------------------------------------------- form */
+  // Sending is scheduled for the next delivery: for now the form only shows a note.
   const form = $("#form"), msg = $("#formMsg");
-  form.addEventListener("submit", async e => {
+  form.addEventListener("submit", e => {
     e.preventDefault();
-    let bad = null;
-    $$("[required]", form).forEach(f => {
-      const ok = f.value.trim() && (f.type !== "email" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.value));
-      f.setAttribute("aria-invalid", !ok); if (!ok && !bad) bad = f;
-    });
-    if (bad) { msg.className = "form__msg err"; msg.textContent = "Please complete your name, a valid email and a short description."; bad.focus(); return; }
-    const data = Object.fromEntries(new FormData(form));
-    const endpoint = RIO.form && RIO.form.endpoint;
-    if (endpoint) {
-      msg.className = "form__msg"; msg.textContent = "Sending…";
-      try {
-        const r = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(data) });
-        if (!r.ok) throw new Error(r.status);
-        form.reset(); msg.textContent = "Thank you — your request is in. Our New York team will be in touch shortly.";
-      } catch {
-        msg.className = "form__msg err"; msg.textContent = `Something went wrong. Please email us at ${C.email || "our studio"}.`;
-      }
-      return;
-    }
-    const body = [
-      `Name: ${data.name}`, data.company && `Company: ${data.company}`, `Email: ${data.email}`, data.phone && `Phone: ${data.phone}`,
-      `Service: ${data.service}`, `Metal: ${data.metal}`, data.quantity && `Quantity: ${data.quantity}`, "", data.message
-    ].filter(x => x !== undefined && x !== "").join("\n");
-    location.href = `mailto:${C.email || ""}?subject=${encodeURIComponent("New project — " + data.service + " (" + data.name + ")")}&body=${encodeURIComponent(body)}`;
-    msg.className = "form__msg"; msg.textContent = "Your email app should open with the request ready to send.";
+    msg.className = "form__msg";
+    msg.textContent = `Online requests are coming soon. In the meantime, call us at ${C.phone || "our studio"} or write to ${C.email || "us"}.`;
   });
 })();

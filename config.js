@@ -13,10 +13,5 @@ window.RIO = {
   prices: {
     endpoint: "https://api.gold-api.com/price/",
     refreshMs: 60000
-  },
-
-  // Start-a-project form. Leave endpoint empty to open the visitor's email app
-  // with the request pre-filled (sent to contact.email). Set a URL (Formspree,
-  // Basin, your own API…) to POST the form as JSON instead.
-  form: { endpoint: "" }
+  }
 };

@@ -12,9 +12,9 @@ Abrir http://localhost:4180. Se necesita un servidor (no `file://`) para que car
 
 ## Editar datos del negocio
 
-Todo está en `config.js`: dirección, teléfono, email, el feed de precios y el endpoint del formulario.
+Todo está en `config.js`: dirección, teléfono, email y el feed de precios.
 
-- **Formulario:** con `form.endpoint` vacío abre el email del visitante con la solicitud prellenada. Para recibirla directo, poner una URL (Formspree, Basin, API propia) que acepte POST JSON.
+- **Formulario:** por ahora no envía nada; al pulsar "Send request" muestra una nota con el teléfono y el email. El envío real queda para la siguiente entrega.
 - **Precios:** vienen de `api.gold-api.com` (gratis, sin key, sin SLA) y se refrescan cada 60 s. Si falla, se muestran los últimos precios guardados en el navegador, marcados como "last known". Para producción conviene un proveedor con SLA (Metals-API, GoldAPI.io, etc.).
 
 ## Secciones
