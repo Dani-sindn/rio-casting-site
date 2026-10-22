@@ -179,7 +179,7 @@
     const vs = "attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}";
     const fs = `precision mediump float;
 uniform sampler2D uTex;uniform vec2 uRes,uTexel,uMo;uniform vec4 uRect;
-uniform float uT,uLevel,uFade,uHead,uTail,uHot,uLit;uniform vec3 uB,uM,uD;
+uniform float uT,uLevel,uFade,uHead,uTail,uHot,uLit,uSrc;uniform vec3 uB,uM,uD;
 const float VT=${G.vTop.toFixed(5)},VB=${G.vBot.toFixed(5)},TW=${TW}.,TH=${TH}.;
 // the bar's lower (left) wall is the floor the metal slides on
 const float WL0=${(PAD + 63.4253).toFixed(3)},WL1=${(PAD + 291.286).toFixed(3)};
@@ -250,12 +250,30 @@ float span=step(uTail,uv.y)*step(uv.y,min(uHead,surf+1.5/TH));
 float xs=WL0+11.;
 float stream=0.,halo=0.;
 if(uv.y<VT){
- float fall=clamp((uv.y*TH+${PAD * 3}.)/(${PAD * 3}.+VT*TH),0.,1.);   // 0 high above → 1 at the bar
- float sway=(noise(vec2(uv.y*12.,uT*1.6))-.5)*2.2*(1.-fall);
- float hw=mix(4.2,2.6,fall);                                  // the column necks as it speeds up
+ // free fall from the top of the frame. q is a "time of flight" coordinate
+ // (∝ √distance fallen), so features drift down and stretch as they accelerate.
+ float drop=max(VT*TH-uSrc*TH,1.);
+ float fallen=max(P.y-uSrc*TH,0.);
+ float f=clamp(fallen/drop,0.,1.);
+ float q=2.*sqrt(fallen);
+ // the pour rate breathes, like metal glugging out of a crucible
+ float glug=.16*sin(uT*2.3)+.12*(noise(vec2(uT*1.4,.5))-.5);
+ // side-to-side motion travels down the column; pinned near the bar so it lands true
+ float sway=(sin(q*.42-uT*2.6)*1.5+(noise(vec2(q*.35-uT*2.2,3.))-.5)*2.6)*sin(3.1416*min(f*1.15,1.));
+ // necking as it speeds up, plus bulges riding down the stream
+ float bulge=1.+.22*sin(q*1.25-uT*10.)+.18*(noise(vec2(q*.9-uT*7.,9.))-.5);
+ float hw=mix(5.6,3.,sqrt(f))*(1.+glug)*bulge;
  float d=abs(P.x-xs-sway);
- stream=(1.-smoothstep(hw-1.,hw+.6,d))*span;
- halo=(1.-smoothstep(0.,hw*6.,d))*span*.3;
+ float body=1.-smoothstep(hw-1.,hw+.7,d);
+ // near the tail the thread breaks into beads (end of pour)
+ float tailY=uTail*TH, headY=uHead*TH;
+ float beads=smoothstep(-.15,.25,sin(q*2.6-uT*16.));
+ body*=mix(beads,1.,smoothstep(0.,42.,P.y-tailY));
+ stream=body*span;
+ // the leading drop: a rounder, heavier head
+ float hd=length(vec2(P.x-xs,(P.y-headY+hw*.6)*.75));
+ stream=max(stream,(1.-smoothstep(hw*1.25,hw*1.25+1.,hd))*step(headY,VT*TH)*step(uTail,uHead));
+ halo=(1.-smoothstep(0.,hw*6.,d))*span*(.26+.1*sin(uT*7.+q));
 }else{
  float h=P.x-wall(uv.y);                                      // distance from the floor wall
  float th=8.+3.*noise(vec2(uv.y*26.,uT*3.));                   // sheet thickness
@@ -294,7 +312,7 @@ gl_FragColor=vec4(col,clamp(a,0.,1.));
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
     const loc = gl.getAttribLocation(pr, "p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
     const U = {};
-    ["uTex", "uRes", "uTexel", "uMo", "uRect", "uT", "uLevel", "uFade", "uHead", "uTail", "uHot", "uLit", "uB", "uM", "uD"].forEach(k => U[k] = gl.getUniformLocation(pr, k));
+    ["uTex", "uRes", "uTexel", "uMo", "uRect", "uT", "uLevel", "uFade", "uHead", "uTail", "uHot", "uLit", "uSrc", "uB", "uM", "uD"].forEach(k => U[k] = gl.getUniformLocation(pr, k));
     gl.uniform1i(U.uTex, 0); gl.uniform2f(U.uTexel, 1 / TW, 1 / TH);
 
     // ---- layout: where the logo sits inside the stage
@@ -341,6 +359,7 @@ gl_FragColor=vec4(col,clamp(a,0.,1.));
       gl.uniform1f(U.uLevel, level); gl.uniform1f(U.uHead, head); gl.uniform1f(U.uTail, tail);
       gl.uniform1f(U.uHot, hot); gl.uniform1f(U.uFade, fade);
       gl.uniform1f(U.uLit, level * level * fade);
+      gl.uniform1f(U.uSrc, vTopCanvas);
       gl.uniform3fv(U.uB, P.b); gl.uniform3fv(U.uM, P.m); gl.uniform3fv(U.uD, P.d);
       gl.uniform2f(U.uMo, mo[0], mo[1]);
       gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
