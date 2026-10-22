@@ -717,8 +717,9 @@ gl_FragColor=vec4(col,clamp(a,0.,1.));
     const t0 = performance.now();
     function render(now) {
       const t = STILL ? 0 : Math.max(0, now - t0) / 1000;
-      const s = prog * (FORMS.length - 1), i = Math.min(FORMS.length - 2, Math.floor(s));
-      const k = smooth(.2, .8, s - i), A = FORMS[i], B = FORMS[i + 1];
+      // the jewel loops on its own clock: hold each form, then melt into the next
+      const n = FORMS.length, s = t / 3.4, i = Math.floor(s) % n, j = (i + 1) % n;
+      const k = smooth(.55, 1, s - Math.floor(s)), A = FORMS[i], B = FORMS[j];
       for (const key of ["a", "b", "c"]) {
         let d = "";
         const pa = A[key], pb = B[key];
@@ -733,12 +734,12 @@ gl_FragColor=vec4(col,clamp(a,0.,1.));
       glint.setAttribute("cx", (ga[0] + (gb[0] - ga[0]) * k).toFixed(1));
       glint.setAttribute("cy", (ga[1] + (gb[1] - ga[1]) * k).toFixed(1));
       stops.forEach((st, j) => st.setAttribute("stop-color", mixHex(A.col[j], B.col[j], k)));
-      const cur = k < .5 ? i : i + 1;
+      const cur = k < .5 ? i : j;
       if (cur !== shown) {
         shown = cur;
         fig.textContent = "Fig. 0" + (cur + 1) + " — " + FORMS[cur].name;
         metal.textContent = FORMS[cur].metal;
-        items.forEach((li, j) => li.classList.toggle("is-on", j === cur));
+        items.forEach((li, x) => li.classList.toggle("is-on", x === cur));
       }
     }
     function update() {
