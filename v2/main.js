@@ -186,12 +186,18 @@ const float WL0=${(PAD + 63.4253).toFixed(3)},WL1=${(PAD + 291.286).toFixed(3)};
 float hash(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
 float noise(vec2 p){vec2 i=floor(p),f=fract(p);vec2 u=f*f*(3.-2.*f);
 return mix(mix(hash(i),hash(i+vec2(1,0)),u.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),u.x),u.y);}
+// molten colour by temperature: deep red → red-orange → orange → yellow → white-hot
+vec3 molten(float x){x=clamp(x,0.,1.);
+vec3 c=mix(vec3(.42,.02,.01),vec3(.88,.1,.02),smoothstep(0.,.3,x));
+c=mix(c,vec3(1.,.38,.03),smoothstep(.25,.58,x));
+c=mix(c,vec3(1.,.74,.18),smoothstep(.55,.85,x));
+return mix(c,vec3(1.,.94,.68),smoothstep(.86,1.,x));}
 float wall(float v){return mix(WL0,WL1,clamp((v-VT)/(VB-VT),0.,1.));}
 void main(){
 vec2 fc=vec2(gl_FragCoord.x,uRes.y-gl_FragCoord.y);
 vec2 uv=(fc-uRect.xy)/uRect.zw;
 vec3 col=vec3(0.);float a=0.;
-vec3 hot=vec3(1.,.42,.08),hotHi=vec3(1.,.86,.55);
+vec3 hot=molten(.48),hotHi=molten(.9);
 vec3 tint=mix(uM,hot,uHot*.75);
 vec2 P=uv*vec2(TW,TH);
 float surf0=mix(VB,VT,uLevel);
@@ -234,9 +240,10 @@ if(inTex&&(rIn>0.||bIn>0.)){
  float specL=pow(max(dot(reflect(-L,nL),V),0.),18.);
  vec3 metal=mix(uD,uM,.55+.45*band);metal=mix(metal,uB,band*band*.7)+uB*specL*.9;
  float depth=uv.y-surf;
- float h=(1.-smoothstep(0.,.14,depth))*uHot;
- vec3 liquid=mix(metal,mix(hot,hotHi,h)*1.25,h*.85);
- liquid+=hotHi*(1.-smoothstep(0.,.005,abs(depth)))*uHot*.8;
+ float h=(1.-smoothstep(0.,.2,depth))*uHot;
+ float hn=h*(.8+.4*noise(vec2(uv.x*22.,uv.y*30.-uT*1.5)));
+ vec3 liquid=mix(metal,molten(.28+.72*hn)*1.15,smoothstep(.05,.75,h)*.9);
+ liquid+=molten(.92)*(1.-smoothstep(0.,.005,abs(depth)))*uHot*.8;
  float dis=noise(uv*55.);
  float vis=smoothstep(dis-.08,dis+.02,uFade*1.08);
  vec3 barCol=mix(cav,liquid,fill>0.?vis*smoothstep(-.004,.004,depth):0.);
@@ -248,7 +255,7 @@ if(inTex&&(rIn>0.||bIn>0.)){
 // and slides down hugging that wall as a sheet, until it meets the pool.
 float span=step(uTail,uv.y)*step(uv.y,min(uHead,surf+1.5/TH));
 float xs=WL0+11.;
-float stream=0.,halo=0.;
+float stream=0.,halo=0.,core=0.;
 if(uv.y<VT){
  // free fall from the top of the frame. q is a "time of flight" coordinate
  // (∝ √distance fallen), so features drift down and stretch as they accelerate.
@@ -270,6 +277,7 @@ if(uv.y<VT){
  float beads=smoothstep(-.15,.25,sin(q*2.6-uT*16.));
  body*=mix(beads,1.,smoothstep(0.,42.,P.y-tailY));
  stream=body*span;
+ core=1.-clamp(d/hw,0.,1.);
  // the leading drop: a rounder, heavier head
  float hd=length(vec2(P.x-xs,(P.y-headY+hw*.6)*.75));
  stream=max(stream,(1.-smoothstep(hw*1.25,hw*1.25+1.,hd))*step(headY,VT*TH)*step(uTail,uHead));
@@ -281,12 +289,14 @@ if(uv.y<VT){
  // a short bend where the falling column meets the wall
  float corner=(1.-smoothstep(0.,.03,uv.y-VT))*(1.-smoothstep(2.,4.5,abs(P.x-xs)));
  stream=max(sheet,corner)*span*bIn;
+ core=max(1.-clamp(abs(h-th*.4)/(th*.6),0.,1.),corner);
  halo=(1.-smoothstep(0.,th*3.,max(h,0.)))*span*bIn*.35;
 }
 float streak=.55+.45*noise(vec2(P.x*.25,P.y*.09-uT*16.));
-vec3 sc=mix(hot,hotHi,.45+.55*streak);
+float flick=noise(vec2(P.y*.05-uT*9.,uT*2.));
+vec3 sc=molten(.3+.38*core+.22*streak+.12*flick);
 col=mix(col,sc*1.2,stream);a=max(a,stream);
-col+=hot*halo*.5;a=max(a,halo*.4);
+col+=molten(.32)*halo*.65;a=max(a,halo*.4);
 // impact: a hot bloom plus droplets thrown off the pool
 vec2 I=vec2(ix,surf0*TH);
 float sp=exp(-pow(length(P-I)/9.,2.))*pouring;
@@ -299,7 +309,7 @@ for(int k=0;k<7;k++){
  float r=mix(2.1,.6,ph);
  sp+=(1.-smoothstep(r*.4,r,length(P-dp)))*(1.-ph)*pouring*bIn*step(dp.y,I.y+1.);
 }
-col+=hotHi*sp*1.2;a=max(a,min(sp,1.));
+col+=molten(.95)*sp*1.2;a=max(a,min(sp,1.));
 gl_FragColor=vec4(col,clamp(a,0.,1.));
 }`;
     const sh = (t, src) => { const o = gl.createShader(t); gl.shaderSource(o, src); gl.compileShader(o); return o; };
