@@ -34,7 +34,7 @@ img,svg,canvas{display:block;max-width:100%}
 a{color:inherit;text-decoration:none}
 button,input,select,textarea{font:inherit;color:inherit}
 h1,h2,h3{margin:0;font-weight:400}
-h2{font-family:var(--display);font-stretch:120%;font-size:clamp(30px,4.2vw,58px);font-weight:600;line-height:1.02;letter-spacing:-.03em}
+h2{font-family:var(--display);font-size:clamp(32px,4.6vw,62px);font-weight:600;line-height:1.02;letter-spacing:-.035em}
 h2 em,h1 em{font-style:normal;font-weight:400;opacity:.5}
 h3{font-size:19px;font-weight:600;letter-spacing:-.01em;line-height:1.3}
 p{margin:0}
@@ -96,7 +96,7 @@ p{margin:0}
 .menu{position:fixed;inset:0;z-index:40;background:var(--ink);padding:110px var(--gut) 40px;display:flex}
 .menu[hidden]{display:none}
 .menu nav{display:flex;flex-direction:column;gap:6px;width:100%}
-.menu a{font:600 30px/1.3 var(--display);font-stretch:120%;letter-spacing:-.02em;color:#fff;border-bottom:1px solid var(--line-l);padding:10px 0}
+.menu a{font:600 30px/1.3 var(--display);letter-spacing:-.02em;color:#fff;border-bottom:1px solid var(--line-l);padding:10px 0}
 
 /* ---------- hero: the logo, cast in metal ---------- */
 .hero{position:sticky;top:0;z-index:0;height:100svh;color:#fff;overflow:hidden;display:flex;flex-direction:column;justify-content:center;
@@ -113,7 +113,7 @@ p{margin:0}
 .pour b{font-weight:500;color:rgba(255,255,255,.85);min-width:15ch}
 .hero__stage.is-fallback .pour{display:none}
 .hero__in{position:relative;z-index:1;padding-top:clamp(96px,14svh,130px);padding-bottom:clamp(32px,7svh,100px);will-change:transform,opacity}
-.hero__title{font-family:var(--display);font-stretch:125%;font-size:clamp(32px,min(5.6vw,9.6svh),88px);line-height:1;letter-spacing:-.035em;font-weight:700;max-width:11ch}
+.hero__title{font-family:var(--display);font-size:clamp(34px,min(6.4vw,10.6svh),100px);line-height:.98;letter-spacing:-.04em;font-weight:700;max-width:11ch}
 .hero__title .line{display:block;overflow:hidden;padding-bottom:.06em}
 .hero__title .line>*{display:inline}
 .molten-word{background:linear-gradient(100deg,var(--molten-hi),var(--molten) 45%,#FFD39A 70%,var(--molten));-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -134,7 +134,7 @@ p{margin:0}
 .manifesto{position:relative;z-index:1;height:320vh;background:var(--paper);border-radius:32px 32px 0 0;box-shadow:0 -40px 80px -20px rgba(0,0,0,.55)}
 .manifesto__stage{position:sticky;top:0;height:100svh;display:flex;align-items:center;overflow:hidden;padding-top:72px}
 .manifesto__grid{display:grid;grid-template-columns:1.05fr 1fr;gap:clamp(30px,5vw,80px);align-items:center}
-.manifesto__text{font:500 clamp(20px,min(2.7vw,4.6svh),38px)/1.24 var(--display);font-stretch:112%;letter-spacing:-.02em;max-width:22ch;color:rgba(10,16,51,.28);transition:color .4s}
+.manifesto__text{font:500 clamp(20px,min(2.7vw,4.6svh),38px)/1.24 var(--display);letter-spacing:-.02em;max-width:22ch;color:rgba(10,16,51,.28);transition:color .4s}
 .manifesto__text .w{transition:color .35s,background-size .45s var(--ease);background:linear-gradient(var(--molten),var(--molten)) 0 94%/0 2px no-repeat}
 .manifesto__text .w.is-on{color:var(--text)}
 .manifesto__text .w.is-cur{background-size:100% 2px}
@@ -190,13 +190,13 @@ p{margin:0}
 .lib__swatch{position:relative;min-height:420px;background:var(--sw,#ccc);transition:background .6s var(--ease);overflow:hidden}
 .lib__swatch::before{content:"";position:absolute;inset:-20%;background:conic-gradient(from 200deg at 60% 40%,rgba(255,255,255,0) 0deg,rgba(255,255,255,.55) 40deg,rgba(255,255,255,0) 90deg,rgba(0,0,0,.25) 200deg,rgba(255,255,255,.3) 300deg,rgba(255,255,255,0) 360deg);mix-blend-mode:overlay;filter:blur(40px)}
 .lib__swatch::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(100deg,rgba(255,255,255,.05) 0 2px,rgba(0,0,0,.03) 2px 4px);mix-blend-mode:overlay}
-.lib__sym{position:absolute;left:28px;bottom:20px;z-index:1;font:700 clamp(76px,10vw,150px)/1 var(--display);font-stretch:125%;letter-spacing:-.04em;color:rgba(255,255,255,.55);mix-blend-mode:soft-light;text-shadow:0 1px 0 rgba(255,255,255,.4)}
+.lib__sym{position:absolute;left:28px;bottom:20px;z-index:1;font:700 clamp(76px,10vw,150px)/1 var(--display);letter-spacing:-.04em;color:rgba(255,255,255,.55);mix-blend-mode:soft-light;text-shadow:0 1px 0 rgba(255,255,255,.4)}
 .lib__stack{display:grid}
 .lib__info{grid-area:1/1;padding:clamp(28px,4vw,48px);display:flex;flex-direction:column;opacity:0;visibility:hidden;transition:opacity .35s var(--ease),visibility 0s .35s}
 .lib__info.is-on{opacity:1;visibility:visible;transition:opacity .45s var(--ease) .05s,visibility 0s}
 .lib__info.is-on>*{animation:fadeUp .5s var(--ease) both}
 .lib__kicker{font:500 11px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--molten)}
-.lib__info h3{font:600 clamp(28px,3.2vw,42px)/1.05 var(--display);font-stretch:120%;letter-spacing:-.03em;margin:10px 0 14px}
+.lib__info h3{font:600 clamp(28px,3.2vw,42px)/1.05 var(--display);letter-spacing:-.03em;margin:10px 0 14px}
 .lib__info>p{color:var(--muted)}
 .lib__specs{margin-top:26px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .spec{border:1px solid var(--line);border-radius:12px;padding:12px 14px}
@@ -269,7 +269,7 @@ p{margin:0}
 .step{position:relative;padding-right:12px}
 .step__n{position:relative;z-index:1;display:grid;place-items:center;width:54px;height:54px;border-radius:50%;background:var(--paper);border:1px solid var(--line);font:500 13px var(--mono);transition:background .4s,color .4s,border-color .4s}
 .step.is-lit .step__n{background:var(--molten);color:#fff;border-color:var(--molten)}
-.step h3{margin:28px 0 10px;font:600 21px/1.2 var(--display);font-stretch:118%;letter-spacing:-.02em}
+.step h3{margin:28px 0 10px;font:600 21px/1.2 var(--display);letter-spacing:-.02em}
 .step p{color:var(--muted);font-size:15px}
 
 /* ---------- world ---------- */
@@ -383,7 +383,7 @@ p{margin:0}
 @media (max-width:560px){
   .btn--sm{display:none}
   .hero__in{padding-top:0}
-  .hero__title{font-size:clamp(30px,min(10vw,6.4svh),52px)}
+  .hero__title{font-size:clamp(34px,min(11.5vw,7svh),58px)}
   .hero__cta .btn{flex:1 1 100%}
   .hero__foot{display:none}
   .hero__in{padding-bottom:40px}
