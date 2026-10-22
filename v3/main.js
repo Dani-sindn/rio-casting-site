@@ -205,30 +205,32 @@ float la=uT*.3;
 vec3 L=normalize(vec3(cos(la)*.8+uMo.x*.6,sin(la)*.5+.35-uMo.y*.6,.6));
 vec3 V=vec3(0.,0.,1.);
 
-// ---- sand mould: a rough, grainy bed the logo is pressed into
-float g1=noise(P*.85),g2=noise(P*.22+7.),g3=noise(P*.06+3.);
-float grain=g1*.45+g2*.35+g3*.2;
-float gx=noise((P+vec2(1.2,0.))*.85)-g1,gy=noise((P+vec2(0.,1.2))*.85)-g1;
-// ragged mould edge: the cavity outline is broken up by the sand
-float rough=(noise(P*.12)-.5)*.2+(noise(P*.45)-.5)*.1;
-float cav=smoothstep(.43,.57,s.r+rough);
+// ---- a well-used steel mould: smooth and clean, with soft wear and heat tint
+float w1=noise(P*.012+3.),w2=noise(P*.03+11.);
+float wear=w1*.6+w2*.4;                                   // broad, soft variation only
+float scuff=smoothstep(.64,.9,noise(vec2(P.x*.008+P.y*.004,P.y*.06)))*.5;   // faint long scratches
+float cav=smoothstep(.45,.55,s.r);
 vec4 sx=texture2D(uTex,uv+vec2(uTexel.x*1.5,0.))-texture2D(uTex,uv-vec2(uTexel.x*1.5,0.));
 vec4 sy=texture2D(uTex,uv+vec2(0.,uTexel.y*1.5))-texture2D(uTex,uv-vec2(0.,uTexel.y*1.5));
 if(!inTex){sx=vec4(0.);sy=vec4(0.);}
-vec3 n=normalize(vec3(sx.r*6.-gx*1.4,-sy.r*6.+gy*1.4,1.));
+float ux=noise((P+vec2(6.,0.))*.03+11.)-w2,uy=noise((P+vec2(0.,6.))*.03+11.)-w2;
+vec3 n=normalize(vec3(sx.r*6.-ux*.8,-sy.r*6.+uy*.8,1.));
 float diff=max(dot(n,L),0.);
-float spec=pow(max(dot(reflect(-L,n),V),0.),9.)*.18;
-vec3 sand=vec3(.05,.046,.048)*(.65+.7*grain)+vec3(.075,.068,.064)*diff+spec*vec3(.6,.6,.65);
-sand=mix(sand,sand*.35+vec3(.008),cav);                 // the cavity floor sits in shadow
+float spec=pow(max(dot(reflect(-L,n),V),0.),18.)*.35;
+vec3 steel=vec3(.045,.048,.058)*(.85+.3*wear)+vec3(.07,.072,.08)*diff+spec*vec3(.75,.78,.85);
+steel+=vec3(.05,.05,.055)*scuff*diff;
+// heat tint around the cavity from countless pours (straw → bronze → blue)
+vec3 temper=mix(vec3(.10,.07,.03),vec3(.05,.06,.12),smoothstep(.25,.75,s.g+(w1-.5)*.2));
+steel=mix(steel,steel+temper*.6,smoothstep(.05,.6,s.g)*(1.-cav));
+steel=mix(steel,steel*.3+vec3(.006),cav);                // soot on the cavity floor
 float wall=clamp(length(vec2(sx.r,sy.r))*9.,0.,1.);
-sand+=vec3(.12,.11,.12)*wall*diff*(1.-cav*.5);          // light catching the mould walls
-// warm light from the metal spilling onto the sand
-sand+=tint*s.g*uFade*(.05+uLit*.32+uHot*uLevel*.14)*(.6+.4*grain)*(1.-cav*.75);
-// the bed fades into the dark page around it
+steel+=vec3(.14,.14,.16)*wall*diff*(1.-cav*.4);          // light catching the worn mould walls
+steel+=tint*s.g*uFade*(.05+uLit*.32+uHot*uLevel*.14)*(1.-cav*.75);
+// the mould fades softly into the page
 vec2 C=vec2(TW*.5,TH*.52);
 float rr=length((P-C)/vec2(TW*.66,TH*.62));
-float bed=1.-smoothstep(.62,1.08,rr+(g2-.5)*.12);
-vec3 col=sand;float a=max(bed,cav);
+float bed=1.-smoothstep(.62,1.05,rr);
+vec3 col=steel;float a=max(bed,cav);
 
 // ---- the pool rises through the whole logo
 float surf0=mix(VB,VT,uLevel);
@@ -238,26 +240,18 @@ float rip=sin(rd*.2-uT*12.)*exp(-rd*.03)*pouring*1.8;
 float surf=surf0+((noise(vec2(uv.x*55.,uT*2.))-.5)*2.6+rip)/TH;
 float depth=uv.y-surf;
 float fill=cav*smoothstep(-.003,.003,depth);
-// rough cast metal: pitted, with scale patches once it cools
-vec3 nL=normalize(vec3((noise(P*.035+vec2(0.,uT*.2))-.5)*1.1-sx.r*4.+gx*.35,(noise(P*.045+vec2(uT*.15,9.))-.5)*1.1+sy.r*4.-gy*.35,1.));
+// clean, polished metal with slow reflections
+vec3 nL=normalize(vec3((noise(P*.017+vec2(0.,uT*.15))-.5)*.9-sx.r*4.,(noise(P*.022+vec2(uT*.12,9.))-.5)*.9+sy.r*4.,1.));
 float band=smoothstep(.15,.95,.5+.5*sin(nL.y*5.+nL.x*2.5+uv.y*8.));
-float specL=pow(max(dot(reflect(-L,nL),V),0.),12.);
-float pits=smoothstep(.8,.96,noise(P*.6));
-float scale=smoothstep(.55,.82,g3+noise(P*.11)*.4-.2)*(1.-uHot);
-vec3 metal=mix(uD,uM,.5+.5*band);metal=mix(metal,uB,band*band*.55)+uB*specL*.7;
-metal*=1.-pits*.3;
-metal=mix(metal,metal*.55+vec3(.03,.025,.02),scale*.3);
-metal*=.9+.2*g1;
-// hot crust: glowing veins near the surface while it is still liquid
+float specL=pow(max(dot(reflect(-L,nL),V),0.),20.);
+vec3 metal=mix(uD,uM,.5+.5*band);metal=mix(metal,uB,band*band*.6)+uB*specL*.85;
+metal*=.94+.08*wear;
+// still hot near the surface: red → orange → yellow, cooling into the metal's tone
 float h=(1.-smoothstep(0.,.22,depth))*uHot;
-float vein=1.-smoothstep(0.,.07,abs(noise(P*.04-vec2(0.,uT*.3))-.5));
-float hn=h*(.75+.4*noise(vec2(uv.x*20.,uv.y*28.-uT*1.4)));
+float hn=h*(.8+.3*noise(vec2(uv.x*14.,uv.y*20.-uT*1.4)));
 vec3 liquid=mix(metal,molten(.25+.75*hn)*1.15,smoothstep(.05,.75,h)*.9);
-liquid+=molten(.85)*vein*h*.5;
 liquid+=molten(.92)*(1.-smoothstep(0.,.004,abs(depth)))*uHot*.8;
-float dis=noise(uv*48.);
-float vis=smoothstep(dis-.08,dis+.02,uFade*1.08);
-col=mix(col,liquid,fill*vis);
+col=mix(col,liquid,fill*uFade);
 
 // ---- the pour: a column falls into the top of the stem, straight down to the pool
 float span=step(uTail,uv.y)*step(uv.y,min(uHead,surf+1.5/TH));
@@ -296,16 +290,6 @@ for(int k=0;k<7;k++){
  vec2 dp=I+vec2(vx*ph,vy*ph+95.*ph*ph);
  float r=mix(2.2,.6,ph);
  sp+=(1.-smoothstep(r*.4,r,length(P-dp)))*(1.-ph)*pouring*step(dp.y,I.y+1.);
-}
-// embers drifting up off the hot metal
-for(int k=0;k<9;k++){
- float fk=float(k);
- float ph=fract(uT*.22+fk*.113);
- float ex=${PAD}.+hash(vec2(fk,1.7))*${LW}.;
- vec2 ep=vec2(ex+sin(ph*6.+fk)*10.,surf0*TH-ph*190.);
- float er=mix(1.6,.5,ph);
- float e=(1.-smoothstep(er*.3,er,length(P-ep)))*(1.-ph)*(.5+.5*sin(uT*9.+fk*3.))*max(uHot,uLit*.4)*uFade*step(.05,uLevel);
- sp+=e*.8;
 }
 pm+=molten(.95)*sp*1.2;a=max(a,min(sp,1.));
 gl_FragColor=vec4(pm,clamp(a,0.,1.));

@@ -1,6 +1,6 @@
 # Rio Casting — sitio web
 
-> **Versiones:** la raíz es la versión vigente (v2: hero con el logo oficial fundido en metal, tipografía Archivo). `v1/` guarda la primera propuesta como referencia (no indexada). `v2/` solo redirige a la raíz. `v3/` es una vista previa (no indexada) del hero rústico: todo el logo es un molde de arena que se llena de metal.
+> **Versiones:** la raíz es la versión vigente (v2: hero con el logo oficial fundido en metal, tipografía Archivo). `v1/` guarda la primera propuesta como referencia (no indexada). `v2/` solo redirige a la raíz. `v3/` es una vista previa (no indexada): todo el logo es la cavidad de un molde de acero muy usado (desgaste suave, sin ruido) que se llena de metal.
 
 Landing en inglés para Rio Casting (casting de metales en Nueva York para clientes en todo el mundo). Es un sitio estático, sin build: `index.html`, `styles.css`, `main.js` y `config.js`.
 
