@@ -215,6 +215,14 @@ vec4 tx(vec2 L){vec2 uv=(L+vec2(TW,TH)*.5)/vec2(TW,TH);
  if(uv.x<0.||uv.y<0.||uv.x>1.||uv.y>1.)return vec4(0.);return texture2D(uTex,uv);}
 float sd(vec2 L){return (tx(L).r-.5)*80.;}           // signed distance to the logo, ±40 units
 float sdFar(vec2 L){return (tx(L).g-.5)*320.;}       // same, ±160 units
+// the inlet: a small funnel cut through the top of the frame, right above the stem,
+// so the pour has a way into the logo
+float inlet(vec2 L){
+ float top=-LH*.5;
+ float hw=9.5+max(top-L.y,0.)*.6;                    // widens towards the outside, like a sprue cup
+ vec2 q=vec2(abs(L.x-XS)-hw,max(L.y-(top+2.),(top-RIM-6.)-L.y));
+ return -(length(max(q,0.))+min(max(q.x,q.y),0.));}
+float sdE(vec2 L){return max(sd(L),inlet(L));}       // the frame's inner edge, inlet included
 // worn metal: soft mottling, fine scratches, rubbed patches — no grain
 vec3 worn(vec2 L,vec3 dark,vec3 light,float lum){
  float mott=noise(L*.018)*.6+noise(L*.045+5.)*.4;
@@ -259,11 +267,12 @@ if(dW>-RIM-170.){
  for(int k=1;k<=16;k++){
   float f=float(k)/16.;
   float dq=sdFar(Wp+Lo.xy*run*f);
-  occ=max(occ,smoothstep(-RIM-6.-f*18.,-RIM+4.,dq)*(1.-f*.25));
+  occ+=smoothstep(-RIM-12.-f*24.,-RIM+12.,dq)*(1.-f*.4);   // penumbra stays inside the mask margin
  }
- col*=1.-occ*.42;
- col*=1.-.32*(1.-smoothstep(0.,26.,-RIM-dW));         // contact shadow where it meets the wall
- col+=tint*(1.-smoothstep(0.,90.,-RIM-dW))*uLit*.07;  // warm bounce from the metal
+ occ=clamp(occ/9.,0.,1.);
+ col*=1.-occ*.36;
+ col*=1.-.22*(1.-smoothstep(0.,34.,-RIM-dW));         // contact shadow where it meets the wall
+ col+=tint*(1.-smoothstep(0.,34.,-RIM-dW))*uLit*.07;  // warm bounce from the metal
 }
 
 // ---- side walls (the piece's thickness)
@@ -291,20 +300,22 @@ if(outer<.999&&dF>-RIM-140.){
 // ---- the face: a crisp bevelled frame around the logo, which is recessed as a tray
 if(outer>0.){
  float e=.7;
+ float dE=sdE(F);
  vec2 g=vec2(sd(F+vec2(e,0.))-sd(F-vec2(e,0.)),sd(F+vec2(0.,e))-sd(F-vec2(0.,e)))/(2.*e);
- float wA=1.-smoothstep(FLAT0-.6,FLAT0+.6,dF);      // outer 45° chamfer
- float wC=smoothstep(FLAT1-.6,FLAT1+.6,dF);          // inner chamfer down into the tray
- vec3 nW=R*normalize(vec3(-g*wA+g*wC*1.15,-1.));
+ vec2 gE=vec2(sdE(F+vec2(e,0.))-sdE(F-vec2(e,0.)),sdE(F+vec2(0.,e))-sdE(F-vec2(0.,e)))/(2.*e);
+ float wA=(1.-smoothstep(FLAT0-.6,FLAT0+.6,dF))*(1.-smoothstep(-1.,1.,inlet(F)));  // outer 45° chamfer
+ float wC=smoothstep(FLAT1-.6,FLAT1+.6,dE);          // inner chamfer down into the tray
+ vec3 nW=R*normalize(vec3(-g*wA+gE*wC*1.15,-1.));
  float diff=max(dot(nW,Lw),0.);
  float spec=pow(max(dot(reflect(-Lw,nW),V),0.),40.);
  vec3 frame=worn(F,bzD,bzL,diff)+spec*vec3(1.,.88,.7)*.85;
  // crisp creases where the bevel planes meet
- float crease=(1.-smoothstep(0.,.9,abs(dF-FLAT0)))+(1.-smoothstep(0.,.9,abs(dF-FLAT1)));
+ float crease=(1.-smoothstep(0.,.9,abs(dF-FLAT0)))*(1.-smoothstep(-1.,1.,inlet(F)))+(1.-smoothstep(0.,.9,abs(dE-FLAT1)));
  frame+=bzL*crease*.12*(.4+diff);
  frame+=tint*wC*uLit*.35;
  // the tray: exactly the logo, sunk into the frame; the frame shades its upper-left inner edge
- float tray=smoothstep(-aaw,aaw,dF);
- float shade=1.-smoothstep(-1.,1.6,sd(F+Lo.xy*(RECESS/max(-Lo.z,.25))));
+ float tray=smoothstep(-aaw,aaw,dE);
+ float shade=1.-smoothstep(-1.,1.6,sdE(F+Lo.xy*(RECESS/max(-Lo.z,.25))));
  vec3 trayc=worn(F*1.3+7.,vec3(.028,.028,.034),vec3(.2,.19,.19),.25+wdiff*.2);
  // molten metal filling the tray from the bottom
  float surf=mix(LH*.5,-LH*.5,uLevel)+(noise(vec2(F.x*.06,uT*2.))-.5)*2.;
