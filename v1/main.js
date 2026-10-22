@@ -110,290 +110,116 @@
   $$("a", menu).forEach(a => a.addEventListener("click", () => setMenu(false)));
   addEventListener("keydown", e => { if (e.key === "Escape" && !menu.hidden) setMenu(false); });
 
-  /* ------------------------------------------- hero: the logo, cast in metal */
-  // The official logo is rasterised once into masks (R body, slanted bar, bar glow).
-  // A shader renders the R as a dark bevelled solid that only shows its edges as
-  // light sweeps across it, while molten metal falls into the bar and fills it.
-  // Each pour cycles to the next metal, forever.
-  const POURS = [
-    { name: "18K Yellow Gold", sw: "#E0A93B", b: [1.00, .90, .62], m: [.88, .64, .24], d: [.30, .16, .04] },
-    { name: "18K Rose Gold",   sw: "#D98A6E", b: [1.00, .85, .77], m: [.84, .50, .40], d: [.30, .12, .08] },
-    { name: "Platinum 950",    sw: "#B9C1CC", b: [.96, .98, 1.0], m: [.64, .68, .74], d: [.12, .13, .16] },
-    { name: "Sterling Silver", sw: "#D8DCE2", b: [1.00, 1.0, 1.0], m: [.80, .82, .86], d: [.18, .19, .22] }
-  ];
-  (() => {
-    const cv = $("#cast"), stage = $(".hero__stage"), cap = $("#pour"), capName = $("#pourName"), capDot = $("#pourDot");
-    if (!cv) return;
-    const gl = cv.getContext("webgl", { antialias: false, depth: false, stencil: false, premultipliedAlpha: true, powerPreference: "low-power" });
-    if (!gl) { stage.classList.add("is-fallback"); return; }
-
-    // ---- masks from the official SVG paths (logo units: 448 × 490)
-    const PAD = 56, LW = 448, LH = 490, TW = LW + PAD * 2, TH = LH + PAD * 2;
-    const R_STEM = new Path2D("M0 0H56.378V486.26H0V0Z");
-    const R_BOWL = new Path2D("M305.38 0.236285C380.045 4.49519 439.278 66.3887 439.278 142.119C439.278 203.245 400.688 255.351 346.542 275.416L447.5 462.769L421.575 476.108L395.65 489.446L285.507 284.239H220.813V486.26H164.436V0H305.38V0.236285ZM220.813 227.861H305.38V227.654C349.995 224.636 385.249 187.499 385.249 142.119C385.249 96.7397 349.995 59.6002 305.38 56.5821V56.378H220.813V227.861Z");
-    const BAR = new Path2D("M291.286 486.26L63.4253 0H131.549L354.711 486.26H291.286Z");
-    const mask = (draw) => {
-      const c = document.createElement("canvas"); c.width = TW; c.height = TH;
-      const x = c.getContext("2d"); x.translate(PAD, PAD); x.fillStyle = "#fff"; draw(x);
-      const d = x.getImageData(0, 0, TW, TH).data, a = new Float32Array(TW * TH);
-      for (let i = 0; i < a.length; i++) a[i] = d[i * 4 + 3] / 255;
-      return a;
-    };
-    const blur = (src, r) => { // 3 box passes ≈ gaussian
-      let a = src.slice(), b = new Float32Array(a.length);
-      const pass = (s, t, horiz) => {
-        const n = horiz ? TW : TH, m = horiz ? TH : TW, w = 2 * r + 1;
-        for (let j = 0; j < m; j++) {
-          let acc = 0;
-          const at = (i) => { i = i < 0 ? 0 : i >= n ? n - 1 : i; return horiz ? s[j * TW + i] : s[i * TW + j]; };
-          for (let i = -r; i <= r; i++) acc += at(i);
-          for (let i = 0; i < n; i++) {
-            t[horiz ? j * TW + i : i * TW + j] = acc / w;
-            acc += at(i + r + 1) - at(i - r);
-          }
-        }
-      };
-      for (let k = 0; k < 3; k++) { pass(a, b, true); pass(b, a, false); }
-      return a;
-    };
-    const rMask = mask(x => { x.fill(R_STEM); x.fill(R_BOWL, "evenodd"); });
-    const bMask = mask(x => x.fill(BAR));
-    const rH = blur(rMask, 4), bH = blur(bMask, 3), bG = blur(bMask, 22);
-    const px = new Uint8Array(TW * TH * 4);
-    for (let i = 0; i < TW * TH; i++) {
-      px[i * 4] = rH[i] * 255; px[i * 4 + 1] = bH[i] * 255; px[i * 4 + 2] = Math.min(1, bG[i] * 1.6) * 255; px[i * 4 + 3] = 255;
-    }
-    const tex = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, TW, TH, 0, gl.RGBA, gl.UNSIGNED_BYTE, px);
-    [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T].forEach(p => gl.texParameteri(gl.TEXTURE_2D, p, gl.CLAMP_TO_EDGE));
-    [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER].forEach(p => gl.texParameteri(gl.TEXTURE_2D, p, gl.LINEAR));
-
-    // bar geometry in texture uv (centre line, top → bottom)
-    const G = {
-      xTop: (PAD + 97.49) / TW, xBot: (PAD + 323.0) / TW,
-      vTop: PAD / TH, vBot: (PAD + 486.26) / TH
-    };
-
+  /* --------------------------------------------------------- hero: liquid metal */
+  const HERO_METALS = {
+    molten:   { b: [1.00, .78, .42], m: [.86, .30, .04], d: [.10, .02, .00], g: 1 },
+    yellow:   { b: [1.00, .92, .66], m: [.80, .58, .20], d: [.18, .10, .02], g: 0 },
+    rose:     { b: [1.00, .86, .78], m: [.78, .46, .36], d: [.20, .08, .06], g: 0 },
+    white:    { b: [1.00, .99, .96], m: [.70, .69, .67], d: [.10, .10, .12], g: 0 },
+    platinum: { b: [.95, .97, 1.0], m: [.60, .64, .70], d: [.07, .08, .11], g: 0 },
+    silver:   { b: [1.00, 1.0, 1.0], m: [.74, .76, .80], d: [.12, .13, .16], g: 0 },
+    bronze:   { b: [1.00, .80, .58], m: [.66, .38, .18], d: [.14, .06, .02], g: 0 }
+  };
+  const heroMetal = (() => {
+    const cv = $("#metal");
+    const gl = cv.getContext("webgl", { antialias: false, alpha: false, depth: false, stencil: false, premultipliedAlpha: false, powerPreference: "low-power" });
+    if (!gl) return { set() {} };
     const vs = "attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}";
     const fs = `precision mediump float;
-uniform sampler2D uTex;uniform vec2 uRes,uTexel,uMo;uniform vec4 uRect;
-uniform float uT,uLevel,uFade,uHead,uTail,uHot,uLit,uSrc;uniform vec3 uB,uM,uD;
-const float VT=${G.vTop.toFixed(5)},VB=${G.vBot.toFixed(5)},TW=${TW}.,TH=${TH}.;
-// the bar's lower (left) wall is the floor the metal slides on
-const float WL0=${(PAD + 63.4253).toFixed(3)},WL1=${(PAD + 291.286).toFixed(3)};
+uniform vec2 uR;uniform float uT;uniform vec3 uB,uM,uD;uniform float uG;uniform vec2 uMo;
 float hash(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
 float noise(vec2 p){vec2 i=floor(p),f=fract(p);vec2 u=f*f*(3.-2.*f);
 return mix(mix(hash(i),hash(i+vec2(1,0)),u.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),u.x),u.y);}
-// molten colour by temperature: deep red → red-orange → orange → yellow → white-hot
-vec3 molten(float x){x=clamp(x,0.,1.);
-vec3 c=mix(vec3(.42,.02,.01),vec3(.88,.1,.02),smoothstep(0.,.3,x));
-c=mix(c,vec3(1.,.38,.03),smoothstep(.25,.58,x));
-c=mix(c,vec3(1.,.74,.18),smoothstep(.55,.85,x));
-return mix(c,vec3(1.,.94,.68),smoothstep(.86,1.,x));}
-float wall(float v){return mix(WL0,WL1,clamp((v-VT)/(VB-VT),0.,1.));}
+float fbm(vec2 p){float v=0.,a=.5;mat2 R=mat2(1.6,1.2,-1.2,1.6);for(int i=0;i<4;i++){v+=a*noise(p);p=R*p;a*=.5;}return v;}
+float field(vec2 p){vec2 q=vec2(fbm(p+vec2(0.,uT*.05)),fbm(p+vec2(5.2,1.3)-uT*.04));
+return fbm(p+2.4*q+vec2(uT*.02,0.));}
 void main(){
-vec2 fc=vec2(gl_FragCoord.x,uRes.y-gl_FragCoord.y);
-vec2 uv=(fc-uRect.xy)/uRect.zw;
-vec3 col=vec3(0.);float a=0.;
-vec3 hot=molten(.48),hotHi=molten(.9);
-vec3 tint=mix(uM,hot,uHot*.75);
-vec2 P=uv*vec2(TW,TH);
-float surf0=mix(VB,VT,uLevel);
-float pouring=step(uTail,surf0)*step(surf0,uHead+.01);
-float ix=wall(surf0)+6.;
-// ripples run out from where the sheet hits the pool
-float rd=abs(P.x-ix);
-float rip=sin(rd*.22-uT*13.)*exp(-rd*.035)*pouring*1.6;
-float surf=surf0+((noise(vec2(uv.x*60.,uT*2.2))-.5)*2.4+rip)/TH;
-bool inTex=uv.x>0.&&uv.x<1.&&uv.y>0.&&uv.y<1.;
-vec4 s=inTex?texture2D(uTex,uv):vec4(0.);
-float rIn=smoothstep(.4,.6,s.r),bIn=smoothstep(.4,.6,s.g);
-float fill=uFade*smoothstep(-.004,.004,uv.y-surf);
-// glow of the liquid around the bar
-float glow=s.b*uFade*mix(.25,1.,max(uHot,uLit*.7))*(.35+.65*uLevel);
-col+=tint*glow*.55;a+=glow*.45;
-if(inTex&&(rIn>0.||bIn>0.)){
- vec4 sx=texture2D(uTex,uv+vec2(uTexel.x*1.5,0.))-texture2D(uTex,uv-vec2(uTexel.x*1.5,0.));
- vec4 sy=texture2D(uTex,uv+vec2(0.,uTexel.y*1.5))-texture2D(uTex,uv-vec2(0.,uTexel.y*1.5));
- vec3 V=vec3(0.,0.,1.);
- float la=uT*.32;
- vec3 L=normalize(vec3(cos(la)*.9+uMo.x*.6,sin(la)*.6+.25-uMo.y*.6,.5));
- // R body: dark bevelled solid
- vec3 nR=normalize(vec3(-sx.r*7.,sy.r*7.,1.));
- float specR=pow(max(dot(reflect(-L,nR),V),0.),26.);
- float edge=1.-nR.z;
- float sheen=smoothstep(.75,1.,sin(uv.x*4.+uv.y*3.-uT*.45))*.05;
- vec3 body=vec3(.028,.032,.05)+vec3(.07,.08,.11)*edge+vec3(.85,.88,1.)*specR*(1.1+uLit*1.4)+vec3(.6,.65,.8)*sheen;
- body+=tint*s.b*uFade*(.25+edge*1.2)*.6;
- // as the bar fills, the whole R catches the metal's light
- body+=(vec3(.045,.05,.065)+uM*.07)*uLit+uM*edge*uLit*.55+uB*specR*uLit*.5;
- // bar: empty cavity
- vec3 nB=normalize(vec3(sx.g*6.,-sy.g*6.,1.));
- float specB=pow(max(dot(reflect(-L,nB),V),0.),22.);
- vec3 cav=vec3(.012,.013,.02)+vec3(.5,.55,.7)*specB*.35;
- // liquid metal
- float fl=noise(vec2(uv.x*14.,uv.y*8.-uT*.6))+.22*noise(vec2(uv.x*34.,uv.y*22.+uT*.9));
- vec3 nL=normalize(vec3((fl-.75)*.9-sx.g*3.,(noise(vec2(uv.y*14.,uv.x*9.+uT*.5))-.5)*.9+sy.g*3.,1.));
- float band=smoothstep(.2,.95,.5+.5*sin(nL.y*7.+nL.x*3.+uv.y*14.));
- float specL=pow(max(dot(reflect(-L,nL),V),0.),18.);
- vec3 metal=mix(uD,uM,.55+.45*band);metal=mix(metal,uB,band*band*.7)+uB*specL*.9;
- float depth=uv.y-surf;
- float h=(1.-smoothstep(0.,.2,depth))*uHot;
- float hn=h*(.8+.4*noise(vec2(uv.x*22.,uv.y*30.-uT*1.5)));
- vec3 liquid=mix(metal,molten(.28+.72*hn)*1.15,smoothstep(.05,.75,h)*.9);
- liquid+=molten(.92)*(1.-smoothstep(0.,.005,abs(depth)))*uHot*.8;
- float dis=noise(uv*55.);
- float vis=smoothstep(dis-.08,dis+.02,uFade*1.08);
- vec3 barCol=mix(cav,liquid,fill>0.?vis*smoothstep(-.004,.004,depth):0.);
- vec3 c=mix(body,barCol,bIn);
- float aa=max(rIn,bIn);
- col=mix(col,c,aa);a=mix(a,1.,aa);
-}
-// the pour: a thin column falls onto the top of the bar, lands on its lower wall
-// and slides down hugging that wall as a sheet, until it meets the pool.
-float span=step(uTail,uv.y)*step(uv.y,min(uHead,surf+1.5/TH));
-float xs=WL0+11.;
-float stream=0.,halo=0.,core=0.;
-if(uv.y<VT){
- // free fall from the top of the frame. q is a "time of flight" coordinate
- // (∝ √distance fallen), so features drift down and stretch as they accelerate.
- float drop=max(VT*TH-uSrc*TH,1.);
- float fallen=max(P.y-uSrc*TH,0.);
- float f=clamp(fallen/drop,0.,1.);
- float q=2.*sqrt(fallen);
- // the pour rate breathes, like metal glugging out of a crucible
- float glug=.16*sin(uT*2.3)+.12*(noise(vec2(uT*1.4,.5))-.5);
- // side-to-side motion travels down the column; pinned near the bar so it lands true
- float sway=(sin(q*.42-uT*2.6)*1.5+(noise(vec2(q*.35-uT*2.2,3.))-.5)*2.6)*sin(3.1416*min(f*1.15,1.));
- // necking as it speeds up, plus bulges riding down the stream
- float bulge=1.+.22*sin(q*1.25-uT*10.)+.18*(noise(vec2(q*.9-uT*7.,9.))-.5);
- float hw=mix(5.6,3.,sqrt(f))*(1.+glug)*bulge;
- float d=abs(P.x-xs-sway);
- float body=1.-smoothstep(hw-1.,hw+.7,d);
- // near the tail the thread breaks into beads (end of pour)
- float tailY=uTail*TH, headY=uHead*TH;
- float beads=smoothstep(-.15,.25,sin(q*2.6-uT*16.));
- body*=mix(beads,1.,smoothstep(0.,42.,P.y-tailY));
- stream=body*span;
- core=1.-clamp(d/hw,0.,1.);
- // the leading drop: a rounder, heavier head
- float hd=length(vec2(P.x-xs,(P.y-headY+hw*.6)*.75));
- stream=max(stream,(1.-smoothstep(hw*1.25,hw*1.25+1.,hd))*step(headY,VT*TH)*step(uTail,uHead));
- halo=(1.-smoothstep(0.,hw*6.,d))*span*(.26+.1*sin(uT*7.+q));
-}else{
- float h=P.x-wall(uv.y);                                      // distance from the floor wall
- float th=8.+3.*noise(vec2(uv.y*26.,uT*3.));                   // sheet thickness
- float sheet=smoothstep(-1.,.8,h)*(1.-smoothstep(th-2.5,th+.5,h));
- // a short bend where the falling column meets the wall
- float corner=(1.-smoothstep(0.,.03,uv.y-VT))*(1.-smoothstep(2.,4.5,abs(P.x-xs)));
- stream=max(sheet,corner)*span*bIn;
- core=max(1.-clamp(abs(h-th*.4)/(th*.6),0.,1.),corner);
- halo=(1.-smoothstep(0.,th*3.,max(h,0.)))*span*bIn*.35;
-}
-float streak=.55+.45*noise(vec2(P.x*.25,P.y*.09-uT*16.));
-float flick=noise(vec2(P.y*.05-uT*9.,uT*2.));
-vec3 sc=molten(.3+.38*core+.22*streak+.12*flick);
-col=mix(col,sc*1.2,stream);a=max(a,stream);
-col+=molten(.32)*halo*.65;a=max(a,halo*.4);
-// impact: a hot bloom plus droplets thrown off the pool
-vec2 I=vec2(ix,surf0*TH);
-float sp=exp(-pow(length(P-I)/9.,2.))*pouring;
-for(int k=0;k<7;k++){
- float fk=float(k);
- float ph=fract(uT*1.15+fk*.137);
- float vx=(hash(vec2(fk,3.1))*1.6-.35)*46.;
- float vy=-(.45+hash(vec2(fk,7.7))*.55)*80.;
- vec2 dp=I+vec2(vx*ph,vy*ph+95.*ph*ph);
- float r=mix(2.1,.6,ph);
- sp+=(1.-smoothstep(r*.4,r,length(P-dp)))*(1.-ph)*pouring*bIn*step(dp.y,I.y+1.);
-}
-col+=molten(.95)*sp*1.2;a=max(a,min(sp,1.));
-gl_FragColor=vec4(col,clamp(a,0.,1.));
-}`;
-    const sh = (t, src) => { const o = gl.createShader(t); gl.shaderSource(o, src); gl.compileShader(o); return o; };
+vec2 uv=gl_FragCoord.xy/uR;vec2 p=(gl_FragCoord.xy-.5*uR)/uR.y*1.6+vec2(.3,0.);
+float e=.012;float h=field(p),hx=field(p+vec2(e,0.)),hy=field(p+vec2(0.,e));
+vec3 n=normalize(vec3((h-hx)/e*.22,(h-hy)/e*.22,1.));
+vec3 V=vec3(0.,0.,1.);vec3 R=reflect(-V,n);
+vec3 L=normalize(vec3(uMo*.8+vec2(.35,.55),1.));
+float band=.5+.5*sin(R.y*7.+R.x*2.5+h*4.);band=smoothstep(.15,.95,band);
+float sky=smoothstep(-.2,.6,R.y);
+float diff=max(dot(n,L),0.);
+float spec=pow(max(dot(reflect(-L,n),V),0.),48.);
+vec3 col=mix(uD,uM,clamp(diff*.9+band*.35,0.,1.));
+col=mix(col,uB,band*sky*.85);
+col+=spec*mix(vec3(1.),uB,.4)*1.1;
+float heat=smoothstep(.38,.78,h);
+vec3 em=mix(vec3(.35,.02,0.),mix(vec3(1.,.42,.06),vec3(1.,.86,.5),smoothstep(.6,1.,heat)),heat);
+vec3 molten=col*.18+em*(.25+1.1*heat)+band*sky*vec3(1.,.55,.2)*.35+spec*vec3(1.,.85,.6);
+col=mix(col,molten,uG);
+col*=.55+.45*smoothstep(1.25,.15,length((uv-vec2(.72,.5))*vec2(1.,.8)));
+gl_FragColor=vec4(col,1.);}`;
+    const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); return o; };
     const pr = gl.createProgram();
     gl.attachShader(pr, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, fs));
     gl.linkProgram(pr);
-    if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) { console.warn(gl.getProgramInfoLog(pr)); stage.classList.add("is-fallback"); return; }
+    if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) return { set() {} };
     gl.useProgram(pr);
-    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
     const loc = gl.getAttribLocation(pr, "p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-    const U = {};
-    ["uTex", "uRes", "uTexel", "uMo", "uRect", "uT", "uLevel", "uFade", "uHead", "uTail", "uHot", "uLit", "uSrc", "uB", "uM", "uD"].forEach(k => U[k] = gl.getUniformLocation(pr, k));
-    gl.uniform1i(U.uTex, 0); gl.uniform2f(U.uTexel, 1 / TW, 1 / TH);
+    const U = {}; ["uR", "uT", "uB", "uM", "uD", "uG", "uMo"].forEach(k => U[k] = gl.getUniformLocation(pr, k));
 
-    // ---- layout: where the logo sits inside the stage
-    let budget = LOW ? 140000 : MOBILE ? 240000 : 420000, scale = 1, rect = [0, 0, 1, 1];
-    const layout = () => {
-      const W = stage.clientWidth, H = stage.clientHeight;
-      scale = Math.min(devicePixelRatio || 1, Math.sqrt(budget / Math.max(1, W * H)));
-      cv.width = Math.max(1, Math.round(W * scale)); cv.height = Math.max(1, Math.round(H * scale));
+    const cur = JSON.parse(JSON.stringify(HERO_METALS.molten));
+    let target = HERO_METALS.molten, from = JSON.parse(JSON.stringify(cur)), t0 = 0;
+    const mouse = [0, 0], mT = [0, 0];
+    let visible = true, raf = 0, start = performance.now();
+
+    // The surface is soft by nature, so it renders to a small pixel budget and is
+    // upscaled by the browser. The budget shrinks further if frames run slow.
+    let budget = LOW ? 120000 : MOBILE ? 200000 : 380000, slow = 0, last = 0;
+    const resize = () => {
+      const w = cv.clientWidth, h = cv.clientHeight;
+      const s = Math.min(devicePixelRatio || 1, Math.sqrt(budget / Math.max(1, w * h)));
+      cv.width = Math.max(1, Math.round(w * s));
+      cv.height = Math.max(1, Math.round(h * s));
       gl.viewport(0, 0, cv.width, cv.height);
-      const narrow = innerWidth <= 860;
-      const lh = narrow ? Math.min(H * .58, W * .6 * LH / LW) : Math.min(H * .6, W * .78 * LH / LW, 620);
-      const s = lh / LH, cxp = W / 2, cyp = narrow ? H * .56 : H * .52;
-      rect = [(cxp - (PAD + LW / 2) * s) * scale, (cyp - (PAD + LH / 2) * s) * scale, TW * s * scale, TH * s * scale];
-      if (cap) cap.style.top = `${Math.round(cyp + LH / 2 * s + (narrow ? 12 : 34))}px`;
-      if (STILL) draw(performance.now());
+      if (reduce) draw(performance.now());
     };
-
-    // ---- the pour timeline (seconds within one cycle)
-    const CYCLE = 8.6, STILL = reduce || LOW;
-    const ease = x => x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
-    const clamp01 = x => Math.max(0, Math.min(1, x));
-    let idx = -1, start = performance.now(), mo = [0, 0], moT = [0, 0];
+    const lerp = (a, b, k) => a + (b - a) * k;
     function draw(now) {
-      const T = STILL ? 0 : Math.max(0, now - start) / 1000, c = Math.floor(T / CYCLE), t = T - c * CYCLE;
-      const i = STILL ? 0 : c % POURS.length, P = POURS[i];
-      if (i !== idx) {
-        idx = i;
-        if (capName) { capName.textContent = P.name; capDot.style.background = P.sw; }
-      }
-      const vTopCanvas = -rect[1] / rect[3] - .02;
-      let level, head, tail, hot, fade;
-      if (STILL) { level = 1; head = -1; tail = 2; hot = 0; fade = 1; }
-      else {
-        head = vTopCanvas + (G.vBot - vTopCanvas) * Math.pow(clamp01(t / .9), 2);
-        level = ease(clamp01((t - .8) / 4.6));
-        tail = t < 5.1 ? -9 : vTopCanvas + (G.vBot - vTopCanvas) * Math.pow(clamp01((t - 5.1) / .8), 2);
-        hot = 1 - clamp01((t - 5.3) / 1.8);
-        fade = 1 - clamp01((t - 7.6) / 1);
-      }
-      mo[0] += (moT[0] - mo[0]) * .05; mo[1] += (moT[1] - mo[1]) * .05;
-      gl.uniform2f(U.uRes, cv.width, cv.height);
-      gl.uniform4f(U.uRect, rect[0], rect[1], rect[2], rect[3]);
-      gl.uniform1f(U.uT, STILL ? 2.2 : (T % 600) + 2);
-      gl.uniform1f(U.uLevel, level); gl.uniform1f(U.uHead, head); gl.uniform1f(U.uTail, tail);
-      gl.uniform1f(U.uHot, hot); gl.uniform1f(U.uFade, fade);
-      gl.uniform1f(U.uLit, level * level * fade);
-      gl.uniform1f(U.uSrc, vTopCanvas);
-      gl.uniform3fv(U.uB, P.b); gl.uniform3fv(U.uM, P.m); gl.uniform3fv(U.uD, P.d);
-      gl.uniform2f(U.uMo, mo[0], mo[1]);
-      gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+      const k = Math.min(1, (now - t0) / 900), ek = 1 - Math.pow(1 - k, 3);
+      ["b", "m", "d"].forEach(c => { for (let i = 0; i < 3; i++) cur[c][i] = lerp(from[c][i], target[c][i], ek); });
+      cur.g = lerp(from.g, target.g, ek);
+      mouse[0] = lerp(mouse[0], mT[0], .05); mouse[1] = lerp(mouse[1], mT[1], .05);
+      gl.uniform2f(U.uR, cv.width, cv.height);
+      gl.uniform1f(U.uT, reduce ? 12 : (now - start) / 1000 + 12);
+      gl.uniform3fv(U.uB, cur.b); gl.uniform3fv(U.uM, cur.m); gl.uniform3fv(U.uD, cur.d);
+      gl.uniform1f(U.uG, cur.g); gl.uniform2f(U.uMo, mouse[0], mouse[1]);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     }
-
-    let raf = 0, last = 0, slow = 0, visible = true;
     const onTop = () => scrollY < innerHeight * 1.02;
     const loop = (now) => {
       const dt = now - last;
       if (dt >= FRAME_MS - 2) {
-        if (last && dt > 55 && budget > 80000 && ++slow > 20) { budget *= .7; slow = 0; layout(); }
+        if (last && dt > 55 && budget > 70000 && ++slow > 20) { budget *= .7; slow = 0; resize(); }
         last = now; draw(now);
       }
-      raf = visible && onTop() && !STILL ? requestAnimationFrame(loop) : (last = 0, 0);
+      raf = visible && onTop() && !reduce && !LOW ? requestAnimationFrame(loop) : (last = 0, 0);
     };
-    const wake = () => { if (visible && onTop() && !raf && !STILL) raf = requestAnimationFrame(loop); };
-    onScrollFrame(wake);
-    new IntersectionObserver(([en]) => { visible = en.isIntersecting; wake(); }).observe(stage);
-    let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(layout, 150); });
-    if (!MOBILE) addEventListener("pointermove", e => { moT[0] = e.clientX / innerWidth - .5; moT[1] = e.clientY / innerHeight - .5; }, { passive: true });
-    layout(); draw(performance.now()); wake();
-    stage.classList.add("is-ready");
+    onScrollFrame(() => { if (visible && onTop() && !raf && !reduce && !LOW) raf = requestAnimationFrame(loop); });
+    new IntersectionObserver(([en]) => {
+      visible = en.isIntersecting;
+      if (visible && onTop() && !raf && !reduce && !LOW) raf = requestAnimationFrame(loop);
+    }).observe(cv);
+    let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(resize, 150); }); resize();
+    if (!MOBILE) addEventListener("pointermove", e => { mT[0] = e.clientX / innerWidth - .5; mT[1] = .5 - e.clientY / innerHeight; }, { passive: true });
+    if (reduce || LOW) draw(performance.now()); else raf = requestAnimationFrame(loop);
+    cv.style.background = "none";
+    return {
+      set(id) {
+        from = JSON.parse(JSON.stringify(cur)); target = HERO_METALS[id]; t0 = performance.now();
+        if (reduce || LOW) { t0 -= 1000; draw(performance.now()); }
+      }
+    };
   })();
+  $$("#metalChips .chip").forEach(ch => ch.addEventListener("click", () => {
+    $$("#metalChips .chip").forEach(c => { c.classList.toggle("is-on", c === ch); c.setAttribute("aria-pressed", c === ch); });
+    heroMetal.set(ch.dataset.metal);
+  }));
 
   /* ---------------------------------------------------------- metal library */
   let prices = {}; // sym -> USD per troy oz
@@ -647,14 +473,13 @@ gl_FragColor=vec4(col,clamp(a,0.,1.));
   })();
 
   /* ------------------------------------------- hero curtain (stays put) */
-  const heroIn = $(".hero__in"), heroStage = $(".hero__stage");
+  const heroIn = $(".hero__in"), heroShade = $(".hero__shade");
   const onCurtain = () => {
     if (reduce) return;
     const k = Math.min(1, Math.max(0, scrollY / innerHeight));
     heroIn.style.opacity = 1 - k * 1.15;
     heroIn.style.transform = `translateY(${-k * 70}px) scale(${1 - k * .04})`;
-    heroStage.style.opacity = 1 - k * .9;
-    heroStage.style.transform = `translateY(${-k * 40}px) scale(${1 - k * .05})`;
+    heroShade.style.opacity = 1 + k * .6;
   };
   onScrollFrame(onCurtain);
 
@@ -717,9 +542,8 @@ gl_FragColor=vec4(col,clamp(a,0.,1.));
     const t0 = performance.now();
     function render(now) {
       const t = STILL ? 0 : Math.max(0, now - t0) / 1000;
-      // the jewel loops on its own clock: hold each form, then melt into the next
-      const n = FORMS.length, s = t / 3.4, i = Math.floor(s) % n, j = (i + 1) % n;
-      const k = smooth(.55, 1, s - Math.floor(s)), A = FORMS[i], B = FORMS[j];
+      const s = prog * (FORMS.length - 1), i = Math.min(FORMS.length - 2, Math.floor(s));
+      const k = smooth(.2, .8, s - i), A = FORMS[i], B = FORMS[i + 1];
       for (const key of ["a", "b", "c"]) {
         let d = "";
         const pa = A[key], pb = B[key];
@@ -734,12 +558,12 @@ gl_FragColor=vec4(col,clamp(a,0.,1.));
       glint.setAttribute("cx", (ga[0] + (gb[0] - ga[0]) * k).toFixed(1));
       glint.setAttribute("cy", (ga[1] + (gb[1] - ga[1]) * k).toFixed(1));
       stops.forEach((st, j) => st.setAttribute("stop-color", mixHex(A.col[j], B.col[j], k)));
-      const cur = k < .5 ? i : j;
+      const cur = k < .5 ? i : i + 1;
       if (cur !== shown) {
         shown = cur;
         fig.textContent = "Fig. 0" + (cur + 1) + " — " + FORMS[cur].name;
         metal.textContent = FORMS[cur].metal;
-        items.forEach((li, x) => li.classList.toggle("is-on", x === cur));
+        items.forEach((li, j) => li.classList.toggle("is-on", j === cur));
       }
     }
     function update() {

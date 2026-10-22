@@ -1,5 +1,7 @@
 # Rio Casting — sitio web
 
+> **Versiones:** la raíz es la versión vigente (v2: hero con el logo oficial fundido en metal, tipografía Archivo). `v1/` guarda la primera propuesta como referencia (no indexada). `v2/` solo redirige a la raíz.
+
 Landing en inglés para Rio Casting (casting de metales en Nueva York para clientes en todo el mundo). Es un sitio estático, sin build: `index.html`, `styles.css`, `main.js` y `config.js`.
 
 ## Ver en local
@@ -19,10 +21,10 @@ Todo está en `config.js`: dirección, teléfono, email y el feed de precios.
 
 ## Secciones
 
-1. Hero con metal líquido en WebGL; el visitante cambia el metal (molten, oro amarillo, rosa, blanco, platino, plata, bronce). El hero queda fijo y el resto de la página sube encima como una cortina.
-2. Our principle (scrollytelling): con el scroll, el texto se va "vertiendo" palabra por palabra y una joya en línea SVG cambia de forma (solitario → colgante → aro → brazalete → brillante) y de metal.
+1. Hero: el logo oficial en 3D oscuro (WebGL). Metal fundido cae y se desliza por la pared de la barra hasta llenarla, en loop: 18K Yellow Gold → 18K Rose Gold → Platinum 950 → Sterling Silver. La "R" se ilumina al llenarse. El hero queda fijo y el resto de la página sube encima como una cortina.
+2. Our principle: el texto se revela palabra por palabra con el scroll; la joya en línea SVG cambia de forma y de metal en un loop propio (solitario → colgante → aro → brazalete → brillante).
 3. (Se eliminaron la franja de datos y la marquesina; esa info se repite más abajo.)
-4. Capabilities: casting, CAD, impresión 3D castable, acabado.
+4. Capabilities: 4 cards con íconos propios y hover (casting, CAD, impresión 3D castable, acabado).
 5. Material library: ficha interactiva por metal con su precio spot.
 6. Metal desk: precios en vivo (oz / g / dwt / kg), oro por kilate y estimador de metal (cera → metal → valor).
 7. Proceso en 4 pasos.
