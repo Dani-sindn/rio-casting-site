@@ -393,7 +393,18 @@ gl_FragColor=vec4(pm,1.);
         const room = Math.max(160, textTop - 84 - 34);
         lh = Math.min(room * .9, W * .58 * LH / LW); cxp = W * .5; cyp = 84 + room / 2;
       } else {
-        lh = Math.min(H * .6, W * .34 * LH / LW, 640); cxp = W * .71; cyp = H * .5;
+        // keep clear air between the headline and the piece: measure where the copy ends
+        const sl = stage.getBoundingClientRect().left;
+        let textRight = W * .45;
+        if (heroCopy) {
+          const rg = document.createRange(); rg.selectNodeContents($(".hero__title", heroCopy));
+          textRight = Math.max(rg.getBoundingClientRect().right, $(".hero__lead", heroCopy).getBoundingClientRect().right,
+            $(".hero__cta", heroCopy).getBoundingClientRect().left + 360) - sl;
+        }
+        const gap = Math.max(96, W * .07), margin = Math.max(48, W * .05);
+        const room = Math.max(220, W - margin - (textRight + gap));
+        lh = Math.min(H * .5, room * .92 * LH / LW, 520);
+        cxp = textRight + gap + room / 2; cyp = H * .52;
       }
       const s = lh / LH;
       rect = [(cxp - (PAD + LW / 2) * s) * scale, (cyp - (PAD + LH / 2) * s) * scale, TW * s * scale, TH * s * scale];
@@ -451,6 +462,7 @@ gl_FragColor=vec4(pm,1.);
     let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(layout, 150); });
     if (!MOBILE) addEventListener("pointermove", e => { moT[0] = e.clientX / innerWidth - .5; moT[1] = e.clientY / innerHeight - .5; }, { passive: true });
     layout(); draw(performance.now()); wake();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { layout(); draw(performance.now()); });
     stage.classList.add("is-ready");
   })();
 
