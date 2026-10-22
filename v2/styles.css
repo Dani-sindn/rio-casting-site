@@ -164,19 +164,22 @@ p{margin:0}
 .head--split .head__lead{margin-top:0}
 
 /* ---------- capabilities ---------- */
-.caps{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line)}
-.cap{position:relative;padding:36px 28px 40px 0;border-right:1px solid var(--line);display:flex;flex-direction:column}
-.cap+.cap{padding-left:28px}
-.cap:last-child{border-right:0}
+.caps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.cap{position:relative;display:flex;flex-direction:column;padding:28px 26px 30px;background:#fff;border:1px solid var(--line);border-radius:16px;
+  transition:transform .35s var(--ease),box-shadow .35s var(--ease),border-color .35s}
+.cap::after{content:"";position:absolute;left:26px;right:26px;top:-1px;height:2px;background:var(--molten);transform:scaleX(0);transform-origin:left;transition:transform .45s var(--ease)}
+.cap:hover{transform:translateY(-6px);border-color:rgba(255,107,15,.4);box-shadow:0 28px 50px -30px rgba(7,11,31,.45)}
+.cap:hover::after{transform:scaleX(1)}
+.cap__top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:30px}
+.cap__tile{display:grid;place-items:center;width:60px;height:60px;border-radius:12px;background:var(--bone);color:var(--ink);transition:background .35s,color .35s}
+.cap:hover .cap__tile{background:var(--ink);color:#fff}
+.cap__ic{width:36px;height:36px;transition:transform .45s var(--ease)}
+.cap:hover .cap__ic{transform:scale(1.08)}
 .cap__n{font:500 12px var(--mono);color:var(--muted);letter-spacing:.1em}
-.cap__ic{width:52px;height:52px;color:var(--royal);margin:30px 0 28px;transition:color .3s,transform .4s var(--ease)}
-.cap:hover .cap__ic{color:var(--molten);transform:translateY(-4px)}
-.cap p{color:var(--muted);font-size:15px;margin-top:12px}
-.cap ul{list-style:none;padding:0;margin:24px 0 0;display:flex;flex-direction:column;gap:8px;font:500 12px/1.4 var(--mono);letter-spacing:.04em;color:var(--text)}
+.cap h3{font-family:var(--display);font-weight:600;font-size:20px;letter-spacing:-.02em}
+.cap p{color:var(--muted);font-size:15px;margin-top:10px}
+.cap ul{list-style:none;padding:0;margin:auto 0 0;padding-top:24px;display:flex;flex-direction:column;gap:8px;font:500 12px/1.4 var(--mono);letter-spacing:.04em;color:var(--text)}
 .cap li::before{content:"— ";color:var(--molten)}
-.cap::before{content:"";position:absolute;left:0;right:0;top:-1px;height:2px;background:var(--molten);transform:scaleX(0);transform-origin:left;transition:transform .5s var(--ease)}
-.cap+.cap::before{left:0}
-.cap:hover::before{transform:scaleX(1)}
 
 /* ---------- metal library ---------- */
 .lib{display:grid;grid-template-columns:260px 1fr;gap:40px;align-items:stretch}
@@ -335,15 +338,15 @@ p{margin:0}
 /* ---------- reveal ---------- */
 .js .reveal{opacity:0;transform:translateY(24px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
 .js .reveal.is-seen{opacity:1;transform:none}
+/* capability cards keep their own hover lift once revealed */
+.js .cap.reveal.is-seen{transition:opacity .8s var(--ease),transform .35s var(--ease),box-shadow .35s var(--ease),border-color .35s}
+.js .cap.reveal.is-seen:hover{transform:translateY(-6px)}
 
 /* ---------- responsive ---------- */
 @media (max-width:1100px){
   .nav__links{display:none}
   .burger{display:block}
   .caps{grid-template-columns:repeat(2,1fr)}
-  .cap{padding-left:28px!important;border-bottom:1px solid var(--line)}
-  .cap:nth-child(odd){padding-left:0!important}
-  .cap:nth-child(2n){border-right:0}
   .spots{grid-template-columns:repeat(2,1fr)}
   .lib{grid-template-columns:1fr}
   .lib__tabs{flex-direction:row;overflow-x:auto;border:0;gap:8px;scrollbar-width:none;margin:0 calc(var(--gut)*-1);padding:0 var(--gut)}
@@ -388,7 +391,6 @@ p{margin:0}
   .hero__foot{display:none}
   .hero__in{padding-bottom:40px}
   .caps{grid-template-columns:1fr}
-  .cap{padding-left:0!important;border-right:0}
   .spots{grid-template-columns:1fr 1fr;gap:10px}
   .spot{padding:18px}
   .lib__specs{grid-template-columns:1fr 1fr;gap:8px}
