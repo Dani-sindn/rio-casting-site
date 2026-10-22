@@ -179,7 +179,7 @@
     const vs = "attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}";
     const fs = `precision mediump float;
 uniform sampler2D uTex;uniform vec2 uRes,uTexel,uMo;uniform vec4 uRect;
-uniform float uT,uLevel,uFade,uHead,uTail,uHot;uniform vec3 uB,uM,uD;
+uniform float uT,uLevel,uFade,uHead,uTail,uHot,uLit;uniform vec3 uB,uM,uD;
 const float XT=${G.xTop.toFixed(5)},XB=${G.xBot.toFixed(5)},VT=${G.vTop.toFixed(5)},VB=${G.vBot.toFixed(5)};
 float hash(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
 float noise(vec2 p){vec2 i=floor(p),f=fract(p);vec2 u=f*f*(3.-2.*f);
@@ -198,7 +198,7 @@ vec4 s=inTex?texture2D(uTex,uv):vec4(0.);
 float rIn=smoothstep(.4,.6,s.r),bIn=smoothstep(.4,.6,s.g);
 float fill=uFade*smoothstep(-.004,.004,uv.y-surf);
 // glow of the liquid around the bar
-float glow=s.b*uFade*mix(.25,1.,uHot)*(.35+.65*uLevel);
+float glow=s.b*uFade*mix(.25,1.,max(uHot,uLit*.7))*(.35+.65*uLevel);
 col+=tint*glow*.55;a+=glow*.45;
 if(inTex&&(rIn>0.||bIn>0.)){
  vec4 sx=texture2D(uTex,uv+vec2(uTexel.x*1.5,0.))-texture2D(uTex,uv-vec2(uTexel.x*1.5,0.));
@@ -211,8 +211,10 @@ if(inTex&&(rIn>0.||bIn>0.)){
  float specR=pow(max(dot(reflect(-L,nR),V),0.),26.);
  float edge=1.-nR.z;
  float sheen=smoothstep(.75,1.,sin(uv.x*4.+uv.y*3.-uT*.45))*.05;
- vec3 body=vec3(.028,.032,.05)+vec3(.07,.08,.11)*edge+vec3(.85,.88,1.)*specR*1.1+vec3(.6,.65,.8)*sheen;
+ vec3 body=vec3(.028,.032,.05)+vec3(.07,.08,.11)*edge+vec3(.85,.88,1.)*specR*(1.1+uLit*1.4)+vec3(.6,.65,.8)*sheen;
  body+=tint*s.b*uFade*(.25+edge*1.2)*.6;
+ // as the bar fills, the whole R catches the metal's light
+ body+=(vec3(.045,.05,.065)+uM*.07)*uLit+uM*edge*uLit*.55+uB*specR*uLit*.5;
  // bar: empty cavity
  vec3 nB=normalize(vec3(sx.g*6.,-sy.g*6.,1.));
  float specB=pow(max(dot(reflect(-L,nB),V),0.),22.);
@@ -261,7 +263,7 @@ gl_FragColor=vec4(col,clamp(a,0.,1.));
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
     const loc = gl.getAttribLocation(pr, "p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
     const U = {};
-    ["uTex", "uRes", "uTexel", "uMo", "uRect", "uT", "uLevel", "uFade", "uHead", "uTail", "uHot", "uB", "uM", "uD"].forEach(k => U[k] = gl.getUniformLocation(pr, k));
+    ["uTex", "uRes", "uTexel", "uMo", "uRect", "uT", "uLevel", "uFade", "uHead", "uTail", "uHot", "uLit", "uB", "uM", "uD"].forEach(k => U[k] = gl.getUniformLocation(pr, k));
     gl.uniform1i(U.uTex, 0); gl.uniform2f(U.uTexel, 1 / TW, 1 / TH);
 
     // ---- layout: where the logo sits inside the stage
@@ -307,6 +309,7 @@ gl_FragColor=vec4(col,clamp(a,0.,1.));
       gl.uniform1f(U.uT, STILL ? 2.2 : (T % 600) + 2);
       gl.uniform1f(U.uLevel, level); gl.uniform1f(U.uHead, head); gl.uniform1f(U.uTail, tail);
       gl.uniform1f(U.uHot, hot); gl.uniform1f(U.uFade, fade);
+      gl.uniform1f(U.uLit, level * level * fade);
       gl.uniform3fv(U.uB, P.b); gl.uniform3fv(U.uM, P.m); gl.uniform3fv(U.uD, P.d);
       gl.uniform2f(U.uMo, mo[0], mo[1]);
       gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
