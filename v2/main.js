@@ -180,19 +180,27 @@
     const fs = `precision mediump float;
 uniform sampler2D uTex;uniform vec2 uRes,uTexel,uMo;uniform vec4 uRect;
 uniform float uT,uLevel,uFade,uHead,uTail,uHot,uLit;uniform vec3 uB,uM,uD;
-const float XT=${G.xTop.toFixed(5)},XB=${G.xBot.toFixed(5)},VT=${G.vTop.toFixed(5)},VB=${G.vBot.toFixed(5)};
+const float VT=${G.vTop.toFixed(5)},VB=${G.vBot.toFixed(5)},TW=${TW}.,TH=${TH}.;
+// the bar's lower (left) wall is the floor the metal slides on
+const float WL0=${(PAD + 63.4253).toFixed(3)},WL1=${(PAD + 291.286).toFixed(3)};
 float hash(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
 float noise(vec2 p){vec2 i=floor(p),f=fract(p);vec2 u=f*f*(3.-2.*f);
 return mix(mix(hash(i),hash(i+vec2(1,0)),u.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),u.x),u.y);}
-float cx(float v){return v<VT?XT:mix(XT,XB,(v-VT)/(VB-VT));}
+float wall(float v){return mix(WL0,WL1,clamp((v-VT)/(VB-VT),0.,1.));}
 void main(){
 vec2 fc=vec2(gl_FragCoord.x,uRes.y-gl_FragCoord.y);
 vec2 uv=(fc-uRect.xy)/uRect.zw;
-float aspect=uRect.z/uRect.w;
 vec3 col=vec3(0.);float a=0.;
 vec3 hot=vec3(1.,.42,.08),hotHi=vec3(1.,.86,.55);
 vec3 tint=mix(uM,hot,uHot*.75);
-float surf=mix(VB,VT,uLevel)+(noise(vec2(uv.x*60.,uT*2.2))-.5)*.006;
+vec2 P=uv*vec2(TW,TH);
+float surf0=mix(VB,VT,uLevel);
+float pouring=step(uTail,surf0)*step(surf0,uHead+.01);
+float ix=wall(surf0)+6.;
+// ripples run out from where the sheet hits the pool
+float rd=abs(P.x-ix);
+float rip=sin(rd*.22-uT*13.)*exp(-rd*.035)*pouring*1.6;
+float surf=surf0+((noise(vec2(uv.x*60.,uT*2.2))-.5)*2.4+rip)/TH;
 bool inTex=uv.x>0.&&uv.x<1.&&uv.y>0.&&uv.y<1.;
 vec4 s=inTex?texture2D(uTex,uv):vec4(0.);
 float rIn=smoothstep(.4,.6,s.r),bIn=smoothstep(.4,.6,s.g);
@@ -236,21 +244,44 @@ if(inTex&&(rIn>0.||bIn>0.)){
  float aa=max(rIn,bIn);
  col=mix(col,c,aa);a=mix(a,1.,aa);
 }
-// the pour: a stream falling onto the bar, then running down its slant
-float x0=cx(uv.y);
-float wob=(noise(vec2(uv.y*30.,uT*3.))-.5)*.006;
-float w=mix(.004,.011,smoothstep(VT-.4,VB,uv.y));
-float d=abs(uv.x-x0-wob)*aspect;
-float span=step(uTail,uv.y)*step(uv.y,min(uHead,surf+.004));
-float inside=uv.y<VT?1.:bIn;
-float stream=(1.-smoothstep(w*.5,w,d))*span*inside;
-float halo=(1.-smoothstep(0.,w*5.,d))*span*.35;
-vec3 sc=mix(hot,hotHi,.6+.4*noise(vec2(uv.y*40.-uT*8.,0.)));
+// the pour: a thin column falls onto the top of the bar, lands on its lower wall
+// and slides down hugging that wall as a sheet, until it meets the pool.
+float span=step(uTail,uv.y)*step(uv.y,min(uHead,surf+1.5/TH));
+float xs=WL0+11.;
+float stream=0.,halo=0.;
+if(uv.y<VT){
+ float fall=clamp((uv.y*TH+${PAD * 3}.)/(${PAD * 3}.+VT*TH),0.,1.);   // 0 high above → 1 at the bar
+ float sway=(noise(vec2(uv.y*12.,uT*1.6))-.5)*2.2*(1.-fall);
+ float hw=mix(4.2,2.6,fall);                                  // the column necks as it speeds up
+ float d=abs(P.x-xs-sway);
+ stream=(1.-smoothstep(hw-1.,hw+.6,d))*span;
+ halo=(1.-smoothstep(0.,hw*6.,d))*span*.3;
+}else{
+ float h=P.x-wall(uv.y);                                      // distance from the floor wall
+ float th=8.+3.*noise(vec2(uv.y*26.,uT*3.));                   // sheet thickness
+ float sheet=smoothstep(-1.,.8,h)*(1.-smoothstep(th-2.5,th+.5,h));
+ // a short bend where the falling column meets the wall
+ float corner=(1.-smoothstep(0.,.03,uv.y-VT))*(1.-smoothstep(2.,4.5,abs(P.x-xs)));
+ stream=max(sheet,corner)*span*bIn;
+ halo=(1.-smoothstep(0.,th*3.,max(h,0.)))*span*bIn*.35;
+}
+float streak=.55+.45*noise(vec2(P.x*.25,P.y*.09-uT*16.));
+vec3 sc=mix(hot,hotHi,.45+.55*streak);
 col=mix(col,sc*1.2,stream);a=max(a,stream);
 col+=hot*halo*.5;a=max(a,halo*.4);
-// splash where the stream meets the surface
-float sp=exp(-pow(length(vec2((uv.x-cx(surf))*aspect,uv.y-surf))*40.,2.))*step(uTail,surf)*step(surf,uHead+.01);
-col+=hotHi*sp*1.2;a=max(a,sp);
+// impact: a hot bloom plus droplets thrown off the pool
+vec2 I=vec2(ix,surf0*TH);
+float sp=exp(-pow(length(P-I)/9.,2.))*pouring;
+for(int k=0;k<7;k++){
+ float fk=float(k);
+ float ph=fract(uT*1.15+fk*.137);
+ float vx=(hash(vec2(fk,3.1))*1.6-.35)*46.;
+ float vy=-(.45+hash(vec2(fk,7.7))*.55)*80.;
+ vec2 dp=I+vec2(vx*ph,vy*ph+95.*ph*ph);
+ float r=mix(2.1,.6,ph);
+ sp+=(1.-smoothstep(r*.4,r,length(P-dp)))*(1.-ph)*pouring*bIn*step(dp.y,I.y+1.);
+}
+col+=hotHi*sp*1.2;a=max(a,min(sp,1.));
 gl_FragColor=vec4(col,clamp(a,0.,1.));
 }`;
     const sh = (t, src) => { const o = gl.createShader(t); gl.shaderSource(o, src); gl.compileShader(o); return o; };
