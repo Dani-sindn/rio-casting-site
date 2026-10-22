@@ -121,7 +121,7 @@
     { name: "Sterling Silver", sw: "#D8DCE2", b: [1.00, 1.0, 1.0], m: [.80, .82, .86], d: [.18, .19, .22] }
   ];
   (() => {
-    const cv = $("#cast"), stage = $(".hero__stage"), cap = $("#pour"), capName = $("#pourName"), capDot = $("#pourDot");
+    const heroCopy = $(".hero__in"), cv = $("#cast"), stage = $(".hero__stage"), cap = $("#pour"), capName = $("#pourName"), capDot = $("#pourDot");
     if (!cv) return;
     const gl = cv.getContext("webgl", { antialias: false, depth: false, stencil: false, premultipliedAlpha: true, powerPreference: "low-power" });
     if (!gl) { stage.classList.add("is-fallback"); return; }
@@ -159,10 +159,11 @@
     const bMask = mask(x => x.fill(BAR));
     // the whole logo is one mould: R and bar together
     const uMask = rMask.map((v, i) => Math.max(v, bMask[i]));
-    const uH = blur(uMask, 3), uG = blur(uMask, 10);   // edge · bevel profile
+    // r: the logo (crisp) · g: wide field whose low level is the bevel's outer edge · b: the bar alone
+    const uH = blur(uMask, 3), uG = blur(uMask, 12), bB = blur(bMask, 3);
     const px = new Uint8Array(TW * TH * 4);
     for (let i = 0; i < TW * TH; i++) {
-      px[i * 4] = uH[i] * 255; px[i * 4 + 1] = uG[i] * 255; px[i * 4 + 3] = 255;
+      px[i * 4] = uH[i] * 255; px[i * 4 + 1] = uG[i] * 255; px[i * 4 + 2] = bB[i] * 255; px[i * 4 + 3] = 255;
     }
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
@@ -183,7 +184,8 @@ uniform sampler2D uTex;uniform vec2 uRes,uTexel,uMo;uniform vec4 uRect;
 uniform float uT,uLevel,uFade,uHead,uTail,uHot,uLit,uSrc;uniform vec3 uB,uM,uD;
 const float TW=${TW}.,TH=${TH}.,LH=${LH}.;
 const float XS=${(28.19 - LW / 2).toFixed(2)};   // centre of the R's stem, logo-centred units
-const float DEPTH=66.,DIST=1500.,YAW=-.38,PITCH=.13;
+const float DEPTH=62.,DIST=1500.,YAW=-.36,PITCH=.12;
+const float OUT=.1;                                  // outer bevel edge, ~16 units outside the logo
 float hash(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
 float noise(vec2 p){vec2 i=floor(p),f=fract(p);vec2 u=f*f*(3.-2.*f);
 return mix(mix(hash(i),hash(i+vec2(1,0)),u.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),u.x),u.y);}
@@ -192,9 +194,10 @@ vec3 c=mix(vec3(.42,.02,.01),vec3(.88,.1,.02),smoothstep(0.,.3,x));
 c=mix(c,vec3(1.,.38,.03),smoothstep(.25,.58,x));
 c=mix(c,vec3(1.,.74,.18),smoothstep(.55,.85,x));
 return mix(c,vec3(1.,.94,.68),smoothstep(.86,1.,x));}
+// r: the logo itself (crisp) · g: wide field, its OUT level is the bevel's outer edge · b: the bar alone
 vec4 tx(vec2 L){vec2 uv=(L+vec2(TW,TH)*.5)/vec2(TW,TH);
  if(uv.x<0.||uv.y<0.||uv.x>1.||uv.y>1.)return vec4(0.);return texture2D(uTex,uv);}
-// worn metal: soft mottling, fine scratches and rubbed patches — no grain
+// worn metal: soft mottling, fine scratches, rubbed patches — no grain
 vec3 worn(vec2 L,vec3 dark,vec3 light,float lum){
  float mott=noise(L*.018)*.6+noise(L*.045+5.)*.4;
  float s1=smoothstep(.94,.99,noise(vec2(L.x*.8+L.y*.3,(L.y-L.x*.3)*.022)));
@@ -214,66 +217,99 @@ vec3 rd=normalize(vec3(S,DIST));
 vec3 o=vec3(0.,0.,-DIST)*R,d=rd*R;                    // the ray in the logo's own space
 float t0=-o.z/d.z,t1=(DEPTH-o.z)/d.z;
 vec3 V=-rd;
-float la=uT*.3;
-vec3 Lw=normalize(vec3(cos(la)*.75+uMo.x*.7,-.5+sin(la)*.25+uMo.y*.6,-.8));
+// a key light from the upper left, drifting a little
+float sw=sin(uT*.22)*.25;
+vec3 Lw=normalize(vec3(-.5+sw+uMo.x*.5,-.62+uMo.y*.35,-.62));
+vec3 Lo=Lw*R;
 vec3 hot=molten(.48);vec3 tint=mix(uM,hot,uHot*.75);
 vec3 bzD=vec3(.11,.075,.045),bzL=vec3(.64,.46,.3);   // worn bronze
-vec3 col=vec3(0.);float a=0.;
+vec3 col;bool solid=false;
 
-// ---- side walls: march through the extrusion behind the face
 vec2 F=(o+d*t0).xy;
 vec4 s=tx(F);
-float front=smoothstep(.45,.55,s.r);
-if(front<.99){
+float outer=smoothstep(OUT-.03,OUT+.03,s.g);
+
+// ---- the wall behind, with the piece's shadow on it
+vec2 Wp=(o+d*t1).xy;
+{
+ vec3 nW=R*vec3(0.,0.,-1.);
+ float diff=max(dot(nW,Lw),0.);
+ float spot=1.-smoothstep(120.,980.,length(Wp-vec2(-60.,-40.)));
+ float mott=noise(Wp*.006)*.6+noise(Wp*.017+4.)*.4;
+ vec3 wall=mix(vec3(.028,.024,.026),vec3(.15,.1,.068),spot*(.55+.45*diff))*(.88+.24*mott);
+ // soft shadow: walk from the wall towards the light through the piece's depth
+ float occ=0.,run=DEPTH/max(-Lo.z,.2);
+ for(int k=1;k<=14;k++){
+  float f=float(k)/14.;
+  vec2 q=Wp+Lo.xy*run*f;
+  occ=max(occ,smoothstep(OUT-.04,OUT+.08,tx(q).g)*(1.-f*.35));
+ }
+ wall*=1.-occ*.72;
+ wall*=1.-smoothstep(.01,.12,tx(Wp).g)*.45;           // contact shadow at the base
+ wall+=tint*tx(Wp).g*uLit*.18;                         // warm bounce from the metal
+ col=wall;
+}
+// ---- side walls of the piece
+if(outer<.99){
  float hitK=-1.;vec2 H=F;
  for(int k=1;k<=22;k++){
   vec2 q=(o+d*mix(t0,t1,float(k)/22.)).xy;
-  if(tx(q).r>.5){hitK=float(k)/22.;H=q;break;}
+  if(tx(q).g>OUT){hitK=float(k)/22.;H=q;break;}
  }
  if(hitK>0.){
   float e=2.;
-  vec2 g=vec2(tx(H+vec2(e,0.)).r-tx(H-vec2(e,0.)).r,tx(H+vec2(0.,e)).r-tx(H-vec2(0.,e)).r);
+  vec2 g=vec2(tx(H+vec2(e,0.)).g-tx(H-vec2(e,0.)).g,tx(H+vec2(0.,e)).g-tx(H-vec2(0.,e)).g);
   vec3 nW=R*normalize(vec3(-g,1e-3));
   float diff=max(dot(nW,Lw),0.);
   float spec=pow(max(dot(reflect(-Lw,nW),V),0.),20.);
-  vec3 c=worn(H+vec2(0.,hitK*DEPTH),bzD*.8,bzL*.55,diff*.8+.1)+spec*bzL*.35;
-  c*=mix(1.,.5,hitK);                                // darker towards the back
-  col=c;a=1.;
+  vec3 c=worn(H+vec2(0.,hitK*DEPTH),bzD*.8,bzL*.55,diff*.8+.08)+spec*bzL*.35;
+  c*=mix(1.,.45,hitK);
+  col=c;solid=true;
  }
 }
-// ---- the face: a bevelled bronze rim around a recessed tray
-if(front>0.){
+// ---- the face: a bevelled bronze frame around the logo, which is recessed as a tray
+if(outer>0.){
  float e=1.6;
- float gx=tx(F+vec2(e,0.)).g-tx(F-vec2(e,0.)).g,gy=tx(F+vec2(0.,e)).g-tx(F-vec2(0.,e)).g;
- float panel=smoothstep(.86,.95,s.g);
- vec3 nO=normalize(vec3(-gx*9.*(1.-panel),-gy*9.*(1.-panel),-1.));
- vec3 nW=R*nO;
+ vec4 ex=tx(F+vec2(e,0.))-tx(F-vec2(e,0.)),ey=tx(F+vec2(0.,e))-tx(F-vec2(0.,e));
+ float tray=smoothstep(.36,.64,s.r);
+ // frame profile: an outer chamfer rising to a flat top, then a short inner chamfer down to the tray
+ float outerCh=1.-smoothstep(OUT+.03,.3,s.g);
+ float innerCh=smoothstep(.3,.47,s.r)*(1.-tray);
+ vec2 slope=vec2(-ex.g,-ey.g)*7.*outerCh+vec2(ex.r,ey.r)*5.*innerCh;
+ vec3 nW=R*normalize(vec3(slope,-1.));
  float diff=max(dot(nW,Lw),0.);
  float spec=pow(max(dot(reflect(-Lw,nW),V),0.),28.);
- vec3 rim=worn(F,bzD,bzL,diff)+spec*vec3(1.,.86,.66)*.8;
- rim+=bzL*.25*(1.-smoothstep(.5,.62,s.r));            // edges rubbed bright
- rim+=tint*smoothstep(.7,.92,s.g)*uLit*.35;           // the metal inside warms the rim
- // the tray: recessed, darker, with a crisp inner shadow
- float lip=smoothstep(.82,.88,s.g)*(1.-smoothstep(.88,.94,s.g));
- vec3 tray=worn(F*1.3+7.,vec3(.035,.035,.045),vec3(.24,.22,.22),diff*.5)*(1.-lip*.6);
- // molten metal filling the tray from the bottom
+ vec3 frame=worn(F,bzD,bzL,diff)+spec*vec3(1.,.86,.66)*.75;
+ frame+=bzL*.22*smoothstep(.3,.95,outerCh)*diff;       // worn, polished outer edge
+ frame+=tint*innerCh*uLit*.3;
+ // the tray: exactly the logo, recessed, with its inner wall in shadow
+ vec2 inward=normalize(vec2(ex.r,ey.r)+1e-4);
+ float wallSide=clamp(dot(inward,-normalize(Lo.xy+1e-4)),0.,1.);
+ float lip=(1.-smoothstep(.54,.82,s.r))*tray;
+ vec3 trayc=worn(F*1.3+7.,vec3(.03,.03,.038),vec3(.2,.19,.19),diff*.45);
+ trayc*=1.-lip*(.35+.45*wallSide);
+ // where the bar crosses the R a fine seam keeps both shapes readable
+ float seam=(1.-smoothstep(.04,.3,abs(s.b-.5)))*smoothstep(.9,.97,s.r);
+ // molten metal fills the tray from the bottom
  float surf=mix(LH*.5,-LH*.5,uLevel)+(noise(vec2(F.x*.06,uT*2.))-.5)*2.;
  float depth=(F.y-surf)/LH;
- float fill=panel*smoothstep(-1.,1.,F.y-surf)*uFade;
+ float fill=smoothstep(-1.,1.,F.y-surf)*uFade;
  vec3 nL=normalize(vec3((noise(F*.017+vec2(0.,uT*.15))-.5)*.9,(noise(F*.022+vec2(uT*.12,9.))-.5)*.9,-1.));
  vec3 nLW=R*nL;
  float band=smoothstep(.15,.95,.5+.5*sin(nLW.y*5.+nLW.x*2.5+F.y*.016));
  float specL=pow(max(dot(reflect(-Lw,nLW),V),0.),20.);
  vec3 metal=mix(uD,uM,.5+.5*band);metal=mix(metal,uB,band*band*.6)+uB*specL*.85;
+ metal*=1.-lip*wallSide*.35;
  float h=(1.-smoothstep(0.,.22,depth))*uHot;
  float hn=h*(.8+.3*noise(vec2(F.x*.03,F.y*.04-uT*1.4)));
  vec3 liquid=mix(metal,molten(.25+.75*hn)*1.15,smoothstep(.05,.75,h)*.9);
  liquid+=molten(.92)*(1.-smoothstep(0.,1.4,abs(F.y-surf)))*uHot*.8;
- tray=mix(tray,liquid,fill);
- vec3 face=mix(rim,tray,panel);
- col=mix(col,face,front);a=max(a,front);
+ trayc=mix(trayc,liquid,fill);
+ trayc*=1.-seam*.45;
+ vec3 face=mix(frame,trayc,tray);
+ col=mix(col,face,outer);
 }
-vec3 pm=col*a;
+vec3 pm=col;float a=1.;
 
 // ---- the pour: falls straight down into the top of the stem, onto the rising metal
 float surfL=mix(LH*.5,-LH*.5,uLevel);
@@ -297,10 +333,10 @@ float stream=body*span;
 float core=1.-clamp(dd/hw,0.,1.);
 float streak=.55+.45*noise(vec2(S.x*.25,S.y*.09-uT*16.));
 vec3 scol=molten(.3+.38*core+.22*streak+.12*noise(vec2(S.y*.05-uT*9.,uT*2.)));
-pm=mix(pm,scol*1.2,stream);a=max(a,stream);
+pm=mix(pm,scol*1.2,stream);
 float bloom=exp(-pow(length(S-Si)/9.,2.))*span*step(Si.y-2.,headY);
-pm+=molten(.95)*bloom*.9;a=max(a,bloom*.8);
-gl_FragColor=vec4(pm,clamp(a,0.,1.));
+pm+=molten(.95)*bloom*.9;
+gl_FragColor=vec4(pm,a);
 }`;
     const sh = (t, src) => { const o = gl.createShader(t); gl.shaderSource(o, src); gl.compileShader(o); return o; };
     const pr = gl.createProgram();
@@ -316,15 +352,23 @@ gl_FragColor=vec4(pm,clamp(a,0.,1.));
     gl.uniform1i(U.uTex, 0); gl.uniform2f(U.uTexel, 1 / TW, 1 / TH);
 
     // ---- layout: where the logo sits inside the stage
-    let budget = LOW ? 140000 : MOBILE ? 240000 : 420000, scale = 1, rect = [0, 0, 1, 1];
+    let budget = LOW ? 160000 : MOBILE ? 280000 : 560000, scale = 1, rect = [0, 0, 1, 1];
     const layout = () => {
       const W = stage.clientWidth, H = stage.clientHeight;
       scale = Math.min(devicePixelRatio || 1, Math.sqrt(budget / Math.max(1, W * H)));
       cv.width = Math.max(1, Math.round(W * scale)); cv.height = Math.max(1, Math.round(H * scale));
       gl.viewport(0, 0, cv.width, cv.height);
+      // the stage now fills the hero (it is the wall); place the piece beside / above the copy
       const narrow = innerWidth <= 860;
-      const lh = narrow ? Math.min(H * .58, W * .6 * LH / LW) : Math.min(H * .6, W * .78 * LH / LW, 620);
-      const s = lh / LH, cxp = W / 2, cyp = narrow ? H * .56 : H * .52;
+      let lh, cxp, cyp;
+      if (narrow) {
+        const textTop = heroCopy ? heroCopy.getBoundingClientRect().top - stage.getBoundingClientRect().top : H * .55;
+        const room = Math.max(160, textTop - 84 - 34);
+        lh = Math.min(room * .9, W * .58 * LH / LW); cxp = W * .5; cyp = 84 + room / 2;
+      } else {
+        lh = Math.min(H * .6, W * .34 * LH / LW, 640); cxp = W * .71; cyp = H * .5;
+      }
+      const s = lh / LH;
       rect = [(cxp - (PAD + LW / 2) * s) * scale, (cyp - (PAD + LH / 2) * s) * scale, TW * s * scale, TH * s * scale];
       if (cap) cap.style.top = `${Math.round(cyp + LH / 2 * s + (narrow ? 12 : 34))}px`;
       if (STILL) draw(performance.now());
