@@ -111,9 +111,9 @@
   addEventListener("keydown", e => { if (e.key === "Escape" && !menu.hidden) setMenu(false); });
 
   /* ------------------------------------------- hero: the logo, cast in metal */
-  // v3 · rustic: the whole logo is a cavity pressed into a rough sand mould.
-  // Molten metal is poured into the top of the R's stem and the pool rises
-  // through every part of the logo; it cools into the next metal each cycle.
+  // v3: the logo as a solid, slightly turned 3D piece — a worn bronze bevel
+  // around a recessed tray. Molten metal pours into the top of the R's stem and
+  // fills the whole tray, cooling into the next metal each cycle.
   const POURS = [
     { name: "18K Yellow Gold", sw: "#E0A93B", b: [1.00, .90, .62], m: [.88, .64, .24], d: [.30, .16, .04] },
     { name: "18K Rose Gold",   sw: "#D98A6E", b: [1.00, .85, .77], m: [.84, .50, .40], d: [.30, .12, .08] },
@@ -159,10 +159,10 @@
     const bMask = mask(x => x.fill(BAR));
     // the whole logo is one mould: R and bar together
     const uMask = rMask.map((v, i) => Math.max(v, bMask[i]));
-    const uH = blur(uMask, 4), uG = blur(uMask, 24);
+    const uH = blur(uMask, 3), uG = blur(uMask, 10);   // edge · bevel profile
     const px = new Uint8Array(TW * TH * 4);
     for (let i = 0; i < TW * TH; i++) {
-      px[i * 4] = uH[i] * 255; px[i * 4 + 1] = Math.min(1, uG[i] * 1.5) * 255; px[i * 4 + 3] = 255;
+      px[i * 4] = uH[i] * 255; px[i * 4 + 1] = uG[i] * 255; px[i * 4 + 3] = 255;
     }
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
@@ -181,117 +181,125 @@
     const fs = `precision mediump float;
 uniform sampler2D uTex;uniform vec2 uRes,uTexel,uMo;uniform vec4 uRect;
 uniform float uT,uLevel,uFade,uHead,uTail,uHot,uLit,uSrc;uniform vec3 uB,uM,uD;
-const float VT=${G.vTop.toFixed(5)},VB=${G.vBot.toFixed(5)},TW=${TW}.,TH=${TH}.;
-// the metal is poured into the top of the R's stem, a straight vertical channel
-const float XS=${(PAD + 28.19).toFixed(2)};
+const float TW=${TW}.,TH=${TH}.,LH=${LH}.;
+const float XS=${(28.19 - LW / 2).toFixed(2)};   // centre of the R's stem, logo-centred units
+const float DEPTH=66.,DIST=1500.,YAW=-.38,PITCH=.13;
 float hash(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
 float noise(vec2 p){vec2 i=floor(p),f=fract(p);vec2 u=f*f*(3.-2.*f);
 return mix(mix(hash(i),hash(i+vec2(1,0)),u.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),u.x),u.y);}
-// molten colour by temperature: deep red → red-orange → orange → yellow → white-hot
 vec3 molten(float x){x=clamp(x,0.,1.);
 vec3 c=mix(vec3(.42,.02,.01),vec3(.88,.1,.02),smoothstep(0.,.3,x));
 c=mix(c,vec3(1.,.38,.03),smoothstep(.25,.58,x));
 c=mix(c,vec3(1.,.74,.18),smoothstep(.55,.85,x));
 return mix(c,vec3(1.,.94,.68),smoothstep(.86,1.,x));}
+vec4 tx(vec2 L){vec2 uv=(L+vec2(TW,TH)*.5)/vec2(TW,TH);
+ if(uv.x<0.||uv.y<0.||uv.x>1.||uv.y>1.)return vec4(0.);return texture2D(uTex,uv);}
+// worn metal: soft mottling, fine scratches and rubbed patches — no grain
+vec3 worn(vec2 L,vec3 dark,vec3 light,float lum){
+ float mott=noise(L*.018)*.6+noise(L*.045+5.)*.4;
+ float s1=smoothstep(.94,.99,noise(vec2(L.x*.8+L.y*.3,(L.y-L.x*.3)*.022)));
+ float s2=smoothstep(.95,.99,noise(vec2(L.y*.7-L.x*.45,(L.x*.7+L.y*.45)*.018)+9.));
+ vec3 c=mix(dark,light,clamp(mott*.45+lum*.75,0.,1.));
+ c*=.85+.22*mott;
+ c+=(s1+s2)*.14*light;
+ c*=1.-smoothstep(.6,.85,noise(L*.028+2.))*.18;
+ return c;}
 void main(){
 vec2 fc=vec2(gl_FragCoord.x,uRes.y-gl_FragCoord.y);
-vec2 uv=(fc-uRect.xy)/uRect.zw;
-vec2 P=uv*vec2(TW,TH);
-vec3 hot=molten(.48);
-vec3 tint=mix(uM,hot,uHot*.75);
-bool inTex=uv.x>0.&&uv.x<1.&&uv.y>0.&&uv.y<1.;
-vec4 s=inTex?texture2D(uTex,uv):vec4(0.);
+float sc=uRect.z/TW;vec2 ctr=uRect.xy+uRect.zw*.5;
+vec2 S=(fc-ctr)/sc;                                   // screen, logo units, y down
+float cy=cos(YAW),sy=sin(YAW),cp=cos(PITCH),sp=sin(PITCH);
+mat3 R=mat3(1.,0.,0.,0.,cp,sp,0.,-sp,cp)*mat3(cy,0.,-sy,0.,1.,0.,sy,0.,cy);
+vec3 rd=normalize(vec3(S,DIST));
+vec3 o=vec3(0.,0.,-DIST)*R,d=rd*R;                    // the ray in the logo's own space
+float t0=-o.z/d.z,t1=(DEPTH-o.z)/d.z;
+vec3 V=-rd;
 float la=uT*.3;
-vec3 L=normalize(vec3(cos(la)*.8+uMo.x*.6,sin(la)*.5+.35-uMo.y*.6,.6));
-vec3 V=vec3(0.,0.,1.);
+vec3 Lw=normalize(vec3(cos(la)*.75+uMo.x*.7,-.5+sin(la)*.25+uMo.y*.6,-.8));
+vec3 hot=molten(.48);vec3 tint=mix(uM,hot,uHot*.75);
+vec3 bzD=vec3(.11,.075,.045),bzL=vec3(.64,.46,.3);   // worn bronze
+vec3 col=vec3(0.);float a=0.;
 
-// ---- a well-used steel mould: smooth and clean, with soft wear and heat tint
-float w1=noise(P*.012+3.),w2=noise(P*.03+11.);
-float wear=w1*.6+w2*.4;                                   // broad, soft variation only
-float scuff=smoothstep(.64,.9,noise(vec2(P.x*.008+P.y*.004,P.y*.06)))*.5;   // faint long scratches
-float cav=smoothstep(.45,.55,s.r);
-vec4 sx=texture2D(uTex,uv+vec2(uTexel.x*1.5,0.))-texture2D(uTex,uv-vec2(uTexel.x*1.5,0.));
-vec4 sy=texture2D(uTex,uv+vec2(0.,uTexel.y*1.5))-texture2D(uTex,uv-vec2(0.,uTexel.y*1.5));
-if(!inTex){sx=vec4(0.);sy=vec4(0.);}
-float ux=noise((P+vec2(6.,0.))*.03+11.)-w2,uy=noise((P+vec2(0.,6.))*.03+11.)-w2;
-vec3 n=normalize(vec3(sx.r*6.-ux*.8,-sy.r*6.+uy*.8,1.));
-float diff=max(dot(n,L),0.);
-float spec=pow(max(dot(reflect(-L,n),V),0.),18.)*.35;
-vec3 steel=vec3(.045,.048,.058)*(.85+.3*wear)+vec3(.07,.072,.08)*diff+spec*vec3(.75,.78,.85);
-steel+=vec3(.05,.05,.055)*scuff*diff;
-// heat tint around the cavity from countless pours (straw → bronze → blue)
-vec3 temper=mix(vec3(.10,.07,.03),vec3(.05,.06,.12),smoothstep(.25,.75,s.g+(w1-.5)*.2));
-steel=mix(steel,steel+temper*.6,smoothstep(.05,.6,s.g)*(1.-cav));
-steel=mix(steel,steel*.3+vec3(.006),cav);                // soot on the cavity floor
-float wall=clamp(length(vec2(sx.r,sy.r))*9.,0.,1.);
-steel+=vec3(.14,.14,.16)*wall*diff*(1.-cav*.4);          // light catching the worn mould walls
-steel+=tint*s.g*uFade*(.05+uLit*.32+uHot*uLevel*.14)*(1.-cav*.75);
-// the mould fades softly into the page
-vec2 C=vec2(TW*.5,TH*.52);
-float rr=length((P-C)/vec2(TW*.66,TH*.62));
-float bed=1.-smoothstep(.62,1.05,rr);
-vec3 col=steel;float a=max(bed,cav);
-
-// ---- the pool rises through the whole logo
-float surf0=mix(VB,VT,uLevel);
-float pouring=step(uTail,surf0)*step(surf0,uHead+.01);
-float rd=abs(P.x-XS);
-float rip=sin(rd*.2-uT*12.)*exp(-rd*.03)*pouring*1.8;
-float surf=surf0+((noise(vec2(uv.x*55.,uT*2.))-.5)*2.6+rip)/TH;
-float depth=uv.y-surf;
-float fill=cav*smoothstep(-.003,.003,depth);
-// clean, polished metal with slow reflections
-vec3 nL=normalize(vec3((noise(P*.017+vec2(0.,uT*.15))-.5)*.9-sx.r*4.,(noise(P*.022+vec2(uT*.12,9.))-.5)*.9+sy.r*4.,1.));
-float band=smoothstep(.15,.95,.5+.5*sin(nL.y*5.+nL.x*2.5+uv.y*8.));
-float specL=pow(max(dot(reflect(-L,nL),V),0.),20.);
-vec3 metal=mix(uD,uM,.5+.5*band);metal=mix(metal,uB,band*band*.6)+uB*specL*.85;
-metal*=.94+.08*wear;
-// still hot near the surface: red → orange → yellow, cooling into the metal's tone
-float h=(1.-smoothstep(0.,.22,depth))*uHot;
-float hn=h*(.8+.3*noise(vec2(uv.x*14.,uv.y*20.-uT*1.4)));
-vec3 liquid=mix(metal,molten(.25+.75*hn)*1.15,smoothstep(.05,.75,h)*.9);
-liquid+=molten(.92)*(1.-smoothstep(0.,.004,abs(depth)))*uHot*.8;
-col=mix(col,liquid,fill*uFade);
-
-// ---- the pour: a column falls into the top of the stem, straight down to the pool
-float span=step(uTail,uv.y)*step(uv.y,min(uHead,surf+1.5/TH));
-float drop=max(VT*TH-uSrc*TH,1.);
-float fallen=max(P.y-uSrc*TH,0.);
-float f=clamp(fallen/drop,0.,1.);
-float q=2.*sqrt(fallen);
-float glug=.16*sin(uT*2.3)+.12*(noise(vec2(uT*1.4,.5))-.5);
-float sway=(sin(q*.42-uT*2.6)*1.5+(noise(vec2(q*.35-uT*2.2,3.))-.5)*2.6)*sin(3.1416*min(f*1.15,1.));
-float bulge=1.+.22*sin(q*1.25-uT*10.)+.18*(noise(vec2(q*.9-uT*7.,9.))-.5);
-float hw=mix(6.,3.4,sqrt(f))*(1.+glug)*bulge;
-float d=abs(P.x-XS-sway);
-float body=1.-smoothstep(hw-1.,hw+.7,d);
-float tailY=uTail*TH,headY=uHead*TH;
-float beads=smoothstep(-.15,.25,sin(q*2.6-uT*16.));
-body*=mix(beads,1.,smoothstep(0.,42.,P.y-tailY));
-float stream=body*span;
-float hd=length(vec2(P.x-XS,(P.y-headY+hw*.6)*.75));
-stream=max(stream,(1.-smoothstep(hw*1.25,hw*1.25+1.,hd))*step(uTail,uHead)*step(headY,surf*TH));
-float halo=(1.-smoothstep(0.,hw*6.,d))*span*(.26+.1*sin(uT*7.+q));
-float core=1.-clamp(d/hw,0.,1.);
-float streak=.55+.45*noise(vec2(P.x*.25,P.y*.09-uT*16.));
-float flick=noise(vec2(P.y*.05-uT*9.,uT*2.));
-vec3 sc=molten(.3+.38*core+.22*streak+.12*flick);
-col=mix(col,sc*1.2,stream);a=max(a,stream);
-vec3 pm=col*a;
-pm+=molten(.32)*halo*.65;a=max(a,halo*.4);
-// impact: a hot bloom and droplets thrown off the pool
-vec2 I=vec2(XS,surf0*TH);
-float sp=exp(-pow(length(P-I)/10.,2.))*pouring;
-for(int k=0;k<7;k++){
- float fk=float(k);
- float ph=fract(uT*1.15+fk*.137);
- float vx=(hash(vec2(fk,3.1))*2.-1.)*30.;
- float vy=-(.45+hash(vec2(fk,7.7))*.55)*80.;
- vec2 dp=I+vec2(vx*ph,vy*ph+95.*ph*ph);
- float r=mix(2.2,.6,ph);
- sp+=(1.-smoothstep(r*.4,r,length(P-dp)))*(1.-ph)*pouring*step(dp.y,I.y+1.);
+// ---- side walls: march through the extrusion behind the face
+vec2 F=(o+d*t0).xy;
+vec4 s=tx(F);
+float front=smoothstep(.45,.55,s.r);
+if(front<.99){
+ float hitK=-1.;vec2 H=F;
+ for(int k=1;k<=22;k++){
+  vec2 q=(o+d*mix(t0,t1,float(k)/22.)).xy;
+  if(tx(q).r>.5){hitK=float(k)/22.;H=q;break;}
+ }
+ if(hitK>0.){
+  float e=2.;
+  vec2 g=vec2(tx(H+vec2(e,0.)).r-tx(H-vec2(e,0.)).r,tx(H+vec2(0.,e)).r-tx(H-vec2(0.,e)).r);
+  vec3 nW=R*normalize(vec3(-g,1e-3));
+  float diff=max(dot(nW,Lw),0.);
+  float spec=pow(max(dot(reflect(-Lw,nW),V),0.),20.);
+  vec3 c=worn(H+vec2(0.,hitK*DEPTH),bzD*.8,bzL*.55,diff*.8+.1)+spec*bzL*.35;
+  c*=mix(1.,.5,hitK);                                // darker towards the back
+  col=c;a=1.;
+ }
 }
-pm+=molten(.95)*sp*1.2;a=max(a,min(sp,1.));
+// ---- the face: a bevelled bronze rim around a recessed tray
+if(front>0.){
+ float e=1.6;
+ float gx=tx(F+vec2(e,0.)).g-tx(F-vec2(e,0.)).g,gy=tx(F+vec2(0.,e)).g-tx(F-vec2(0.,e)).g;
+ float panel=smoothstep(.86,.95,s.g);
+ vec3 nO=normalize(vec3(-gx*9.*(1.-panel),-gy*9.*(1.-panel),-1.));
+ vec3 nW=R*nO;
+ float diff=max(dot(nW,Lw),0.);
+ float spec=pow(max(dot(reflect(-Lw,nW),V),0.),28.);
+ vec3 rim=worn(F,bzD,bzL,diff)+spec*vec3(1.,.86,.66)*.8;
+ rim+=bzL*.25*(1.-smoothstep(.5,.62,s.r));            // edges rubbed bright
+ rim+=tint*smoothstep(.7,.92,s.g)*uLit*.35;           // the metal inside warms the rim
+ // the tray: recessed, darker, with a crisp inner shadow
+ float lip=smoothstep(.82,.88,s.g)*(1.-smoothstep(.88,.94,s.g));
+ vec3 tray=worn(F*1.3+7.,vec3(.035,.035,.045),vec3(.24,.22,.22),diff*.5)*(1.-lip*.6);
+ // molten metal filling the tray from the bottom
+ float surf=mix(LH*.5,-LH*.5,uLevel)+(noise(vec2(F.x*.06,uT*2.))-.5)*2.;
+ float depth=(F.y-surf)/LH;
+ float fill=panel*smoothstep(-1.,1.,F.y-surf)*uFade;
+ vec3 nL=normalize(vec3((noise(F*.017+vec2(0.,uT*.15))-.5)*.9,(noise(F*.022+vec2(uT*.12,9.))-.5)*.9,-1.));
+ vec3 nLW=R*nL;
+ float band=smoothstep(.15,.95,.5+.5*sin(nLW.y*5.+nLW.x*2.5+F.y*.016));
+ float specL=pow(max(dot(reflect(-Lw,nLW),V),0.),20.);
+ vec3 metal=mix(uD,uM,.5+.5*band);metal=mix(metal,uB,band*band*.6)+uB*specL*.85;
+ float h=(1.-smoothstep(0.,.22,depth))*uHot;
+ float hn=h*(.8+.3*noise(vec2(F.x*.03,F.y*.04-uT*1.4)));
+ vec3 liquid=mix(metal,molten(.25+.75*hn)*1.15,smoothstep(.05,.75,h)*.9);
+ liquid+=molten(.92)*(1.-smoothstep(0.,1.4,abs(F.y-surf)))*uHot*.8;
+ tray=mix(tray,liquid,fill);
+ vec3 face=mix(rim,tray,panel);
+ col=mix(col,face,front);a=max(a,front);
+}
+vec3 pm=col*a;
+
+// ---- the pour: falls straight down into the top of the stem, onto the rising metal
+float surfL=mix(LH*.5,-LH*.5,uLevel);
+vec3 Wi=R*vec3(XS,surfL,0.),Wt=R*vec3(XS,-LH*.5,0.);
+vec2 Si=Wi.xy*DIST/(DIST+Wi.z),St=Wt.xy*DIST/(DIST+Wt.z);
+float topY=-ctr.y/sc-10.;
+float headY=mix(topY,Si.y,uHead),tailY=mix(topY,Si.y,max(uTail,0.));
+float span=step(tailY,S.y)*step(S.y,headY)*step(uTail,.999)*step(.001,uHead);
+float xc=S.y<St.y?St.x:mix(St.x,Si.x,clamp((S.y-St.y)/max(Si.y-St.y,1.),0.,1.));
+float fallen=max(S.y-topY,0.),q=2.*sqrt(fallen);
+float f=clamp(fallen/max(St.y-topY,1.),0.,1.);
+float glug=.16*sin(uT*2.3)+.12*(noise(vec2(uT*1.4,.5))-.5);
+float sway=(sin(q*.42-uT*2.6)*1.4+(noise(vec2(q*.35-uT*2.2,3.))-.5)*2.4)*sin(3.1416*min(f*1.1,1.));
+float bulge=1.+.2*sin(q*1.25-uT*10.)+.16*(noise(vec2(q*.9-uT*7.,9.))-.5);
+float hw=mix(6.,3.4,sqrt(f))*(1.+glug)*bulge;
+float dd=abs(S.x-xc-sway);
+float body=(1.-smoothstep(hw-1.,hw+.7,dd));
+float beads=smoothstep(-.15,.25,sin(q*2.6-uT*16.));
+body*=mix(beads,1.,smoothstep(0.,40.,S.y-tailY));
+float stream=body*span;
+float core=1.-clamp(dd/hw,0.,1.);
+float streak=.55+.45*noise(vec2(S.x*.25,S.y*.09-uT*16.));
+vec3 scol=molten(.3+.38*core+.22*streak+.12*noise(vec2(S.y*.05-uT*9.,uT*2.)));
+pm=mix(pm,scol*1.2,stream);a=max(a,stream);
+float bloom=exp(-pow(length(S-Si)/9.,2.))*span*step(Si.y-2.,headY);
+pm+=molten(.95)*bloom*.9;a=max(a,bloom*.8);
 gl_FragColor=vec4(pm,clamp(a,0.,1.));
 }`;
     const sh = (t, src) => { const o = gl.createShader(t); gl.shaderSource(o, src); gl.compileShader(o); return o; };
@@ -334,13 +342,12 @@ gl_FragColor=vec4(pm,clamp(a,0.,1.));
         idx = i;
         if (capName) { capName.textContent = P.name; capDot.style.background = P.sw; }
       }
-      const vTopCanvas = -rect[1] / rect[3] - .02;
       let level, head, tail, hot, fade;
-      if (STILL) { level = 1; head = -1; tail = 2; hot = 0; fade = 1; }
+      if (STILL) { level = 1; head = 0; tail = 2; hot = 0; fade = 1; }
       else {
-        head = vTopCanvas + (G.vBot - vTopCanvas) * Math.pow(clamp01(t / .9), 2);
+        head = Math.pow(clamp01(t / .9), 2);                       // fall progress, 0 → 1
         level = ease(clamp01((t - .8) / 4.6));
-        tail = t < 5.1 ? -9 : vTopCanvas + (G.vBot - vTopCanvas) * Math.pow(clamp01((t - 5.1) / .8), 2);
+        tail = t < 5.1 ? -1 : Math.pow(clamp01((t - 5.1) / .8), 2);
         hot = 1 - clamp01((t - 5.3) / 1.8);
         fade = 1 - clamp01((t - 7.6) / 1);
       }
@@ -351,7 +358,6 @@ gl_FragColor=vec4(pm,clamp(a,0.,1.));
       gl.uniform1f(U.uLevel, level); gl.uniform1f(U.uHead, head); gl.uniform1f(U.uTail, tail);
       gl.uniform1f(U.uHot, hot); gl.uniform1f(U.uFade, fade);
       gl.uniform1f(U.uLit, level * level * fade);
-      gl.uniform1f(U.uSrc, vTopCanvas);
       gl.uniform3fv(U.uB, P.b); gl.uniform3fv(U.uM, P.m); gl.uniform3fv(U.uD, P.d);
       gl.uniform2f(U.uMo, mo[0], mo[1]);
       gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
