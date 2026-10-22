@@ -1,6 +1,6 @@
 # Rio Casting — sitio web
 
-> **Versiones:** la raíz es la versión vigente (v2: hero con el logo oficial fundido en metal, tipografía Archivo). `v1/` guarda la primera propuesta como referencia (no indexada). `v2/` solo redirige a la raíz. `v3/` es una vista previa (no indexada): el logo como pieza 3D girada, montada sobre una pared que recibe su sombra. Un marco de bronce gastado con bisel rodea el interior, que tiene la forma exacta del logo y se llena de metal fundido.
+> **Versiones:** la raíz es la versión vigente (v3): el logo como pieza 3D girada sobre una pared, con marco de bronce gastado y bisel, y el interior con la forma exacta del logo, que se llena de metal fundido por una entrada arriba del palo de la R. `v2/` guarda el hero anterior (logo oscuro con la barra que se llena) y `v1/` la primera propuesta; ambas como referencia, no indexadas. `v3/` solo redirige a la raíz.
 
 Landing en inglés para Rio Casting (casting de metales en Nueva York para clientes en todo el mundo). Es un sitio estático, sin build: `index.html`, `styles.css`, `main.js` y `config.js`.
 
@@ -21,7 +21,7 @@ Todo está en `config.js`: dirección, teléfono, email y el feed de precios.
 
 ## Secciones
 
-1. Hero: el logo oficial en 3D oscuro (WebGL). Metal fundido cae y se desliza por la pared de la barra hasta llenarla, en loop: 18K Yellow Gold → 18K Rose Gold → Platinum 950 → Sterling Silver. La "R" se ilumina al llenarse. El hero queda fijo y el resto de la página sube encima como una cortina.
+1. Hero (WebGL): el logo como pieza 3D en perspectiva, montada sobre una pared con sombra suave. Un chorro de metal entra por la abertura superior y llena el interior del logo, en loop: 18K Yellow Gold → 18K Rose Gold → Platinum 950 → Sterling Silver. La geometría sale de un campo de distancia del logo oficial, así que los bordes se ven nítidos a cualquier tamaño. El hero queda fijo y el resto de la página sube encima como una cortina.
 2. Our principle: el texto se revela palabra por palabra con el scroll; la joya en línea SVG cambia de forma y de metal en un loop propio (solitario → colgante → aro → brazalete → brillante).
 3. (Se eliminaron la franja de datos y la marquesina; esa info se repite más abajo.)
 4. Capabilities: 4 cards con íconos propios y hover (casting, CAD, impresión 3D castable, acabado).
