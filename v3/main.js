@@ -1,0 +1,796 @@
+/* =========================================================================
+   Rio Casting — interactions
+   ========================================================================= */
+(() => {
+  "use strict";
+  const RIO = window.RIO || {};
+  const $ = (s, c = document) => c.querySelector(s);
+  const $$ = (s, c = document) => [...c.querySelectorAll(s)];
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // Device budget: low-end or data-saver devices get lighter (or static) visuals.
+  const conn = navigator.connection || {};
+  const LOW = !!conn.saveData || (navigator.deviceMemory || 8) <= 2 || (navigator.hardwareConcurrency || 8) <= 2;
+  const MOBILE = matchMedia("(max-width: 860px), (pointer: coarse)").matches;
+  const FRAME_MS = 1000 / 30; // decorative animations never need more than 30 fps
+  // One passive scroll listener, batched to a single animation frame.
+  const scrollFns = [];
+  let scrollQueued = false;
+  const onScrollFrame = (fn) => { scrollFns.push(fn); fn(); };
+  addEventListener("scroll", () => {
+    if (scrollQueued) return; scrollQueued = true;
+    requestAnimationFrame(() => { scrollQueued = false; for (const fn of scrollFns) fn(); });
+  }, { passive: true });
+  requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.add("is-in")));
+  $("#year").textContent = new Date().getFullYear();
+
+  /* ------------------------------------------------------------------ data */
+  const G_PER_OZ = 31.1034768, G_PER_DWT = 1.55517384;
+  const UNITS = {
+    oz:  { label: "per troy ounce", f: 1 },
+    g:   { label: "per gram", f: 1 / G_PER_OZ },
+    dwt: { label: "per pennyweight", f: G_PER_DWT / G_PER_OZ },
+    kg:  { label: "per kilogram", f: 1000 / G_PER_OZ }
+  };
+  const SPOTS = [
+    { sym: "XAU", name: "Gold",      sw: "linear-gradient(135deg,#FFE7A8,#E0A93B 55%,#7A5212)" },
+    { sym: "XAG", name: "Silver",    sw: "linear-gradient(135deg,#FFFFFF,#D8DCE2 55%,#737A85)" },
+    { sym: "XPT", name: "Platinum",  sw: "linear-gradient(135deg,#F4F7FB,#B9C1CC 55%,#4D5563)" },
+    { sym: "XPD", name: "Palladium", sw: "linear-gradient(135deg,#F3F1EC,#BDB6A8 55%,#5A5448)" }
+  ];
+  const KARATS = [["24K", .999], ["22K", .9167], ["18K", .750], ["14K", .585], ["10K", .417]];
+
+  // Wax-to-metal multipliers assume a casting wax with specific gravity ≈ 1.0.
+  const ALLOYS = [
+    { id: "10k",  name: "10K Gold",         sym: "XAU", fine: .417, sg: 11.6 },
+    { id: "14k",  name: "14K Gold",         sym: "XAU", fine: .585, sg: 13.2 },
+    { id: "18k",  name: "18K Gold",         sym: "XAU", fine: .750, sg: 15.6 },
+    { id: "22k",  name: "22K Gold",         sym: "XAU", fine: .917, sg: 17.8 },
+    { id: "pt",   name: "Platinum 950",     sym: "XPT", fine: .950, sg: 20.8 },
+    { id: "pd",   name: "Palladium 950",    sym: "XPD", fine: .950, sg: 12.0 },
+    { id: "ag",   name: "Sterling Silver",  sym: "XAG", fine: .925, sg: 10.4 },
+    { id: "brass",name: "Brass",            sym: null,  fine: 0,    sg: 8.5 },
+    { id: "bronze",name:"Bronze",           sym: null,  fine: 0,    sg: 8.8 }
+  ];
+
+  const METALS = [
+    { id: "gold", name: "Gold", sym: "Au", kicker: "Precious metal", spot: "XAU",
+      sw: "linear-gradient(140deg,#FFF3C9 0%,#F1C463 30%,#C98F2A 60%,#7A5212 100%)",
+      desc: "Our most-poured metal. Every karat from 10K to 22K, alloyed in yellow, white or rose to match exactly what you have in mind.",
+      specs: [["Karats", "10K · 14K · 18K · 22K"], ["Colors", "Yellow · White · Rose"], ["Best for", "Fine jewelry · Production"]] },
+    { id: "platinum", name: "Platinum", sym: "Pt", kicker: "Precious metal", spot: "XPT",
+      sw: "linear-gradient(140deg,#FFFFFF 0%,#DDE3EA 30%,#A3ACB8 65%,#4D5563 100%)",
+      desc: "Dense, naturally white and built to last. Platinum's high melting point demands real experience at the bench — it's where three decades show.",
+      specs: [["Alloy", "Pt 950"], ["Melts at", "≈ 1,768 °C"], ["Character", "Dense · Hypoallergenic"]] },
+    { id: "palladium", name: "Palladium", sym: "Pd", kicker: "Precious metal", spot: "XPD",
+      sw: "linear-gradient(140deg,#FBFAF6 0%,#D9D4C9 30%,#A39C8E 65%,#5A5448 100%)",
+      desc: "A naturally white platinum-group metal that's lighter on the hand — a refined alternative for white pieces and bands.",
+      specs: [["Alloy", "Pd 950"], ["Melts at", "≈ 1,555 °C"], ["Character", "Light · Naturally white"]] },
+    { id: "silver", name: "Sterling Silver", sym: "Ag", kicker: "Precious metal", spot: "XAG",
+      sw: "linear-gradient(140deg,#FFFFFF 0%,#E9ECF0 30%,#B5BBC4 65%,#636A75 100%)",
+      desc: "Bright, versatile and ideal for collections, samples and production runs that still deserve a precious-metal finish.",
+      specs: [["Alloy", "925"], ["Melts at", "≈ 893 °C"], ["Best for", "Collections · Runs"]] },
+    { id: "brass", name: "Brass", sym: "CuZn", kicker: "Fine metal", spot: null,
+      sw: "linear-gradient(140deg,#FFF0B8 0%,#E2C163 30%,#B08A2E 65%,#5C4512 100%)",
+      desc: "Warm, golden and economical. Perfect for prototypes, fit samples and fashion pieces before committing to precious metal.",
+      specs: [["Base", "Copper · Zinc"], ["Melts at", "≈ 900–940 °C"], ["Best for", "Prototypes · Fashion"]] },
+    { id: "bronze", name: "Bronze", sym: "CuSn", kicker: "Fine metal", spot: null,
+      sw: "linear-gradient(140deg,#F8D2A8 0%,#D4935A 30%,#A0582A 65%,#4A2410 100%)",
+      desc: "Deep, earthy color with strong detail retention — loved for sculptural work and statement pieces.",
+      specs: [["Base", "Copper · Tin"], ["Melts at", "≈ 950 °C"], ["Best for", "Sculptural work"]] },
+    { id: "white", name: "White Metal", sym: "Wm", kicker: "Fine metal", spot: null,
+      sw: "linear-gradient(140deg,#F4F4F2 0%,#CFCFCB 30%,#9A9A96 65%,#55554F 100%)",
+      desc: "A low-melt alloy for fast, affordable production — costume jewelry, components and test runs.",
+      specs: [["Type", "Low-melt alloy"], ["Speed", "Fast production"], ["Best for", "Costume · Components"]] }
+  ];
+
+  /* -------------------------------------------------------------- formatting */
+  const usd = (v, d) => {
+    if (v == null || !isFinite(v)) return "—";
+    const digits = d ?? (v >= 1000 ? 2 : v >= 1 ? 2 : 3);
+    return "$" + v.toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  };
+  const nyTime = (d) => d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" }) + " ET";
+  const nyDate = (d) => d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "America/New_York" });
+  const store = {
+    get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+  };
+
+  /* --------------------------------------------------------------------- nav */
+  const nav = $("#nav"), burger = $("#burger"), menu = $("#menu");
+  const onScroll = () => nav.classList.toggle("is-solid", scrollY > 30);
+  onScrollFrame(onScroll);
+  const setMenu = (open) => {
+    burger.setAttribute("aria-expanded", open); menu.hidden = !open;
+    burger.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+    document.body.style.overflow = open ? "hidden" : "";
+    nav.classList.toggle("is-solid", open || scrollY > 30);
+  };
+  burger.addEventListener("click", () => setMenu(menu.hidden));
+  $$("a", menu).forEach(a => a.addEventListener("click", () => setMenu(false)));
+  addEventListener("keydown", e => { if (e.key === "Escape" && !menu.hidden) setMenu(false); });
+
+  /* ------------------------------------------- hero: the logo, cast in metal */
+  // v3 · rustic: the whole logo is a cavity pressed into a rough sand mould.
+  // Molten metal is poured into the top of the R's stem and the pool rises
+  // through every part of the logo; it cools into the next metal each cycle.
+  const POURS = [
+    { name: "18K Yellow Gold", sw: "#E0A93B", b: [1.00, .90, .62], m: [.88, .64, .24], d: [.30, .16, .04] },
+    { name: "18K Rose Gold",   sw: "#D98A6E", b: [1.00, .85, .77], m: [.84, .50, .40], d: [.30, .12, .08] },
+    { name: "Platinum 950",    sw: "#B9C1CC", b: [.96, .98, 1.0], m: [.64, .68, .74], d: [.12, .13, .16] },
+    { name: "Sterling Silver", sw: "#D8DCE2", b: [1.00, 1.0, 1.0], m: [.80, .82, .86], d: [.18, .19, .22] }
+  ];
+  (() => {
+    const cv = $("#cast"), stage = $(".hero__stage"), cap = $("#pour"), capName = $("#pourName"), capDot = $("#pourDot");
+    if (!cv) return;
+    const gl = cv.getContext("webgl", { antialias: false, depth: false, stencil: false, premultipliedAlpha: true, powerPreference: "low-power" });
+    if (!gl) { stage.classList.add("is-fallback"); return; }
+
+    // ---- masks from the official SVG paths (logo units: 448 × 490)
+    const PAD = 56, LW = 448, LH = 490, TW = LW + PAD * 2, TH = LH + PAD * 2;
+    const R_STEM = new Path2D("M0 0H56.378V486.26H0V0Z");
+    const R_BOWL = new Path2D("M305.38 0.236285C380.045 4.49519 439.278 66.3887 439.278 142.119C439.278 203.245 400.688 255.351 346.542 275.416L447.5 462.769L421.575 476.108L395.65 489.446L285.507 284.239H220.813V486.26H164.436V0H305.38V0.236285ZM220.813 227.861H305.38V227.654C349.995 224.636 385.249 187.499 385.249 142.119C385.249 96.7397 349.995 59.6002 305.38 56.5821V56.378H220.813V227.861Z");
+    const BAR = new Path2D("M291.286 486.26L63.4253 0H131.549L354.711 486.26H291.286Z");
+    const mask = (draw) => {
+      const c = document.createElement("canvas"); c.width = TW; c.height = TH;
+      const x = c.getContext("2d"); x.translate(PAD, PAD); x.fillStyle = "#fff"; draw(x);
+      const d = x.getImageData(0, 0, TW, TH).data, a = new Float32Array(TW * TH);
+      for (let i = 0; i < a.length; i++) a[i] = d[i * 4 + 3] / 255;
+      return a;
+    };
+    const blur = (src, r) => { // 3 box passes ≈ gaussian
+      let a = src.slice(), b = new Float32Array(a.length);
+      const pass = (s, t, horiz) => {
+        const n = horiz ? TW : TH, m = horiz ? TH : TW, w = 2 * r + 1;
+        for (let j = 0; j < m; j++) {
+          let acc = 0;
+          const at = (i) => { i = i < 0 ? 0 : i >= n ? n - 1 : i; return horiz ? s[j * TW + i] : s[i * TW + j]; };
+          for (let i = -r; i <= r; i++) acc += at(i);
+          for (let i = 0; i < n; i++) {
+            t[horiz ? j * TW + i : i * TW + j] = acc / w;
+            acc += at(i + r + 1) - at(i - r);
+          }
+        }
+      };
+      for (let k = 0; k < 3; k++) { pass(a, b, true); pass(b, a, false); }
+      return a;
+    };
+    const rMask = mask(x => { x.fill(R_STEM); x.fill(R_BOWL, "evenodd"); });
+    const bMask = mask(x => x.fill(BAR));
+    // the whole logo is one mould: R and bar together
+    const uMask = rMask.map((v, i) => Math.max(v, bMask[i]));
+    const uH = blur(uMask, 4), uG = blur(uMask, 24);
+    const px = new Uint8Array(TW * TH * 4);
+    for (let i = 0; i < TW * TH; i++) {
+      px[i * 4] = uH[i] * 255; px[i * 4 + 1] = Math.min(1, uG[i] * 1.5) * 255; px[i * 4 + 3] = 255;
+    }
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, TW, TH, 0, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T].forEach(p => gl.texParameteri(gl.TEXTURE_2D, p, gl.CLAMP_TO_EDGE));
+    [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER].forEach(p => gl.texParameteri(gl.TEXTURE_2D, p, gl.LINEAR));
+
+    // bar geometry in texture uv (centre line, top → bottom)
+    const G = {
+      xTop: (PAD + 97.49) / TW, xBot: (PAD + 323.0) / TW,
+      vTop: PAD / TH, vBot: (PAD + 486.26) / TH
+    };
+
+    const vs = "attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}";
+    const fs = `precision mediump float;
+uniform sampler2D uTex;uniform vec2 uRes,uTexel,uMo;uniform vec4 uRect;
+uniform float uT,uLevel,uFade,uHead,uTail,uHot,uLit,uSrc;uniform vec3 uB,uM,uD;
+const float VT=${G.vTop.toFixed(5)},VB=${G.vBot.toFixed(5)},TW=${TW}.,TH=${TH}.;
+// the metal is poured into the top of the R's stem, a straight vertical channel
+const float XS=${(PAD + 28.19).toFixed(2)};
+float hash(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+float noise(vec2 p){vec2 i=floor(p),f=fract(p);vec2 u=f*f*(3.-2.*f);
+return mix(mix(hash(i),hash(i+vec2(1,0)),u.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),u.x),u.y);}
+// molten colour by temperature: deep red → red-orange → orange → yellow → white-hot
+vec3 molten(float x){x=clamp(x,0.,1.);
+vec3 c=mix(vec3(.42,.02,.01),vec3(.88,.1,.02),smoothstep(0.,.3,x));
+c=mix(c,vec3(1.,.38,.03),smoothstep(.25,.58,x));
+c=mix(c,vec3(1.,.74,.18),smoothstep(.55,.85,x));
+return mix(c,vec3(1.,.94,.68),smoothstep(.86,1.,x));}
+void main(){
+vec2 fc=vec2(gl_FragCoord.x,uRes.y-gl_FragCoord.y);
+vec2 uv=(fc-uRect.xy)/uRect.zw;
+vec2 P=uv*vec2(TW,TH);
+vec3 hot=molten(.48);
+vec3 tint=mix(uM,hot,uHot*.75);
+bool inTex=uv.x>0.&&uv.x<1.&&uv.y>0.&&uv.y<1.;
+vec4 s=inTex?texture2D(uTex,uv):vec4(0.);
+float la=uT*.3;
+vec3 L=normalize(vec3(cos(la)*.8+uMo.x*.6,sin(la)*.5+.35-uMo.y*.6,.6));
+vec3 V=vec3(0.,0.,1.);
+
+// ---- sand mould: a rough, grainy bed the logo is pressed into
+float g1=noise(P*.85),g2=noise(P*.22+7.),g3=noise(P*.06+3.);
+float grain=g1*.45+g2*.35+g3*.2;
+float gx=noise((P+vec2(1.2,0.))*.85)-g1,gy=noise((P+vec2(0.,1.2))*.85)-g1;
+// ragged mould edge: the cavity outline is broken up by the sand
+float rough=(noise(P*.12)-.5)*.2+(noise(P*.45)-.5)*.1;
+float cav=smoothstep(.43,.57,s.r+rough);
+vec4 sx=texture2D(uTex,uv+vec2(uTexel.x*1.5,0.))-texture2D(uTex,uv-vec2(uTexel.x*1.5,0.));
+vec4 sy=texture2D(uTex,uv+vec2(0.,uTexel.y*1.5))-texture2D(uTex,uv-vec2(0.,uTexel.y*1.5));
+if(!inTex){sx=vec4(0.);sy=vec4(0.);}
+vec3 n=normalize(vec3(sx.r*6.-gx*1.4,-sy.r*6.+gy*1.4,1.));
+float diff=max(dot(n,L),0.);
+float spec=pow(max(dot(reflect(-L,n),V),0.),9.)*.18;
+vec3 sand=vec3(.05,.046,.048)*(.65+.7*grain)+vec3(.075,.068,.064)*diff+spec*vec3(.6,.6,.65);
+sand=mix(sand,sand*.35+vec3(.008),cav);                 // the cavity floor sits in shadow
+float wall=clamp(length(vec2(sx.r,sy.r))*9.,0.,1.);
+sand+=vec3(.12,.11,.12)*wall*diff*(1.-cav*.5);          // light catching the mould walls
+// warm light from the metal spilling onto the sand
+sand+=tint*s.g*uFade*(.05+uLit*.32+uHot*uLevel*.14)*(.6+.4*grain)*(1.-cav*.75);
+// the bed fades into the dark page around it
+vec2 C=vec2(TW*.5,TH*.52);
+float rr=length((P-C)/vec2(TW*.66,TH*.62));
+float bed=1.-smoothstep(.62,1.08,rr+(g2-.5)*.12);
+vec3 col=sand;float a=max(bed,cav);
+
+// ---- the pool rises through the whole logo
+float surf0=mix(VB,VT,uLevel);
+float pouring=step(uTail,surf0)*step(surf0,uHead+.01);
+float rd=abs(P.x-XS);
+float rip=sin(rd*.2-uT*12.)*exp(-rd*.03)*pouring*1.8;
+float surf=surf0+((noise(vec2(uv.x*55.,uT*2.))-.5)*2.6+rip)/TH;
+float depth=uv.y-surf;
+float fill=cav*smoothstep(-.003,.003,depth);
+// rough cast metal: pitted, with scale patches once it cools
+vec3 nL=normalize(vec3((noise(P*.035+vec2(0.,uT*.2))-.5)*1.1-sx.r*4.+gx*.35,(noise(P*.045+vec2(uT*.15,9.))-.5)*1.1+sy.r*4.-gy*.35,1.));
+float band=smoothstep(.15,.95,.5+.5*sin(nL.y*5.+nL.x*2.5+uv.y*8.));
+float specL=pow(max(dot(reflect(-L,nL),V),0.),12.);
+float pits=smoothstep(.8,.96,noise(P*.6));
+float scale=smoothstep(.55,.82,g3+noise(P*.11)*.4-.2)*(1.-uHot);
+vec3 metal=mix(uD,uM,.5+.5*band);metal=mix(metal,uB,band*band*.55)+uB*specL*.7;
+metal*=1.-pits*.3;
+metal=mix(metal,metal*.55+vec3(.03,.025,.02),scale*.3);
+metal*=.9+.2*g1;
+// hot crust: glowing veins near the surface while it is still liquid
+float h=(1.-smoothstep(0.,.22,depth))*uHot;
+float vein=1.-smoothstep(0.,.07,abs(noise(P*.04-vec2(0.,uT*.3))-.5));
+float hn=h*(.75+.4*noise(vec2(uv.x*20.,uv.y*28.-uT*1.4)));
+vec3 liquid=mix(metal,molten(.25+.75*hn)*1.15,smoothstep(.05,.75,h)*.9);
+liquid+=molten(.85)*vein*h*.5;
+liquid+=molten(.92)*(1.-smoothstep(0.,.004,abs(depth)))*uHot*.8;
+float dis=noise(uv*48.);
+float vis=smoothstep(dis-.08,dis+.02,uFade*1.08);
+col=mix(col,liquid,fill*vis);
+
+// ---- the pour: a column falls into the top of the stem, straight down to the pool
+float span=step(uTail,uv.y)*step(uv.y,min(uHead,surf+1.5/TH));
+float drop=max(VT*TH-uSrc*TH,1.);
+float fallen=max(P.y-uSrc*TH,0.);
+float f=clamp(fallen/drop,0.,1.);
+float q=2.*sqrt(fallen);
+float glug=.16*sin(uT*2.3)+.12*(noise(vec2(uT*1.4,.5))-.5);
+float sway=(sin(q*.42-uT*2.6)*1.5+(noise(vec2(q*.35-uT*2.2,3.))-.5)*2.6)*sin(3.1416*min(f*1.15,1.));
+float bulge=1.+.22*sin(q*1.25-uT*10.)+.18*(noise(vec2(q*.9-uT*7.,9.))-.5);
+float hw=mix(6.,3.4,sqrt(f))*(1.+glug)*bulge;
+float d=abs(P.x-XS-sway);
+float body=1.-smoothstep(hw-1.,hw+.7,d);
+float tailY=uTail*TH,headY=uHead*TH;
+float beads=smoothstep(-.15,.25,sin(q*2.6-uT*16.));
+body*=mix(beads,1.,smoothstep(0.,42.,P.y-tailY));
+float stream=body*span;
+float hd=length(vec2(P.x-XS,(P.y-headY+hw*.6)*.75));
+stream=max(stream,(1.-smoothstep(hw*1.25,hw*1.25+1.,hd))*step(uTail,uHead)*step(headY,surf*TH));
+float halo=(1.-smoothstep(0.,hw*6.,d))*span*(.26+.1*sin(uT*7.+q));
+float core=1.-clamp(d/hw,0.,1.);
+float streak=.55+.45*noise(vec2(P.x*.25,P.y*.09-uT*16.));
+float flick=noise(vec2(P.y*.05-uT*9.,uT*2.));
+vec3 sc=molten(.3+.38*core+.22*streak+.12*flick);
+col=mix(col,sc*1.2,stream);a=max(a,stream);
+vec3 pm=col*a;
+pm+=molten(.32)*halo*.65;a=max(a,halo*.4);
+// impact: a hot bloom and droplets thrown off the pool
+vec2 I=vec2(XS,surf0*TH);
+float sp=exp(-pow(length(P-I)/10.,2.))*pouring;
+for(int k=0;k<7;k++){
+ float fk=float(k);
+ float ph=fract(uT*1.15+fk*.137);
+ float vx=(hash(vec2(fk,3.1))*2.-1.)*30.;
+ float vy=-(.45+hash(vec2(fk,7.7))*.55)*80.;
+ vec2 dp=I+vec2(vx*ph,vy*ph+95.*ph*ph);
+ float r=mix(2.2,.6,ph);
+ sp+=(1.-smoothstep(r*.4,r,length(P-dp)))*(1.-ph)*pouring*step(dp.y,I.y+1.);
+}
+// embers drifting up off the hot metal
+for(int k=0;k<9;k++){
+ float fk=float(k);
+ float ph=fract(uT*.22+fk*.113);
+ float ex=${PAD}.+hash(vec2(fk,1.7))*${LW}.;
+ vec2 ep=vec2(ex+sin(ph*6.+fk)*10.,surf0*TH-ph*190.);
+ float er=mix(1.6,.5,ph);
+ float e=(1.-smoothstep(er*.3,er,length(P-ep)))*(1.-ph)*(.5+.5*sin(uT*9.+fk*3.))*max(uHot,uLit*.4)*uFade*step(.05,uLevel);
+ sp+=e*.8;
+}
+pm+=molten(.95)*sp*1.2;a=max(a,min(sp,1.));
+gl_FragColor=vec4(pm,clamp(a,0.,1.));
+}`;
+    const sh = (t, src) => { const o = gl.createShader(t); gl.shaderSource(o, src); gl.compileShader(o); return o; };
+    const pr = gl.createProgram();
+    gl.attachShader(pr, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(pr);
+    if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) { console.warn(gl.getProgramInfoLog(pr)); stage.classList.add("is-fallback"); return; }
+    gl.useProgram(pr);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(pr, "p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    const U = {};
+    ["uTex", "uRes", "uTexel", "uMo", "uRect", "uT", "uLevel", "uFade", "uHead", "uTail", "uHot", "uLit", "uSrc", "uB", "uM", "uD"].forEach(k => U[k] = gl.getUniformLocation(pr, k));
+    gl.uniform1i(U.uTex, 0); gl.uniform2f(U.uTexel, 1 / TW, 1 / TH);
+
+    // ---- layout: where the logo sits inside the stage
+    let budget = LOW ? 140000 : MOBILE ? 240000 : 420000, scale = 1, rect = [0, 0, 1, 1];
+    const layout = () => {
+      const W = stage.clientWidth, H = stage.clientHeight;
+      scale = Math.min(devicePixelRatio || 1, Math.sqrt(budget / Math.max(1, W * H)));
+      cv.width = Math.max(1, Math.round(W * scale)); cv.height = Math.max(1, Math.round(H * scale));
+      gl.viewport(0, 0, cv.width, cv.height);
+      const narrow = innerWidth <= 860;
+      const lh = narrow ? Math.min(H * .58, W * .6 * LH / LW) : Math.min(H * .6, W * .78 * LH / LW, 620);
+      const s = lh / LH, cxp = W / 2, cyp = narrow ? H * .56 : H * .52;
+      rect = [(cxp - (PAD + LW / 2) * s) * scale, (cyp - (PAD + LH / 2) * s) * scale, TW * s * scale, TH * s * scale];
+      if (cap) cap.style.top = `${Math.round(cyp + LH / 2 * s + (narrow ? 12 : 34))}px`;
+      if (STILL) draw(performance.now());
+    };
+
+    // ---- the pour timeline (seconds within one cycle)
+    const CYCLE = 8.6, STILL = reduce || LOW;
+    const ease = x => x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
+    const clamp01 = x => Math.max(0, Math.min(1, x));
+    let idx = -1, start = performance.now(), mo = [0, 0], moT = [0, 0];
+    function draw(now) {
+      const T = STILL ? 0 : Math.max(0, now - start) / 1000, c = Math.floor(T / CYCLE), t = T - c * CYCLE;
+      const i = STILL ? 0 : c % POURS.length, P = POURS[i];
+      if (i !== idx) {
+        idx = i;
+        if (capName) { capName.textContent = P.name; capDot.style.background = P.sw; }
+      }
+      const vTopCanvas = -rect[1] / rect[3] - .02;
+      let level, head, tail, hot, fade;
+      if (STILL) { level = 1; head = -1; tail = 2; hot = 0; fade = 1; }
+      else {
+        head = vTopCanvas + (G.vBot - vTopCanvas) * Math.pow(clamp01(t / .9), 2);
+        level = ease(clamp01((t - .8) / 4.6));
+        tail = t < 5.1 ? -9 : vTopCanvas + (G.vBot - vTopCanvas) * Math.pow(clamp01((t - 5.1) / .8), 2);
+        hot = 1 - clamp01((t - 5.3) / 1.8);
+        fade = 1 - clamp01((t - 7.6) / 1);
+      }
+      mo[0] += (moT[0] - mo[0]) * .05; mo[1] += (moT[1] - mo[1]) * .05;
+      gl.uniform2f(U.uRes, cv.width, cv.height);
+      gl.uniform4f(U.uRect, rect[0], rect[1], rect[2], rect[3]);
+      gl.uniform1f(U.uT, STILL ? 2.2 : (T % 600) + 2);
+      gl.uniform1f(U.uLevel, level); gl.uniform1f(U.uHead, head); gl.uniform1f(U.uTail, tail);
+      gl.uniform1f(U.uHot, hot); gl.uniform1f(U.uFade, fade);
+      gl.uniform1f(U.uLit, level * level * fade);
+      gl.uniform1f(U.uSrc, vTopCanvas);
+      gl.uniform3fv(U.uB, P.b); gl.uniform3fv(U.uM, P.m); gl.uniform3fv(U.uD, P.d);
+      gl.uniform2f(U.uMo, mo[0], mo[1]);
+      gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+
+    let raf = 0, last = 0, slow = 0, visible = true;
+    const onTop = () => scrollY < innerHeight * 1.02;
+    const loop = (now) => {
+      const dt = now - last;
+      if (dt >= FRAME_MS - 2) {
+        if (last && dt > 55 && budget > 80000 && ++slow > 20) { budget *= .7; slow = 0; layout(); }
+        last = now; draw(now);
+      }
+      raf = visible && onTop() && !STILL ? requestAnimationFrame(loop) : (last = 0, 0);
+    };
+    const wake = () => { if (visible && onTop() && !raf && !STILL) raf = requestAnimationFrame(loop); };
+    onScrollFrame(wake);
+    new IntersectionObserver(([en]) => { visible = en.isIntersecting; wake(); }).observe(stage);
+    let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(layout, 150); });
+    if (!MOBILE) addEventListener("pointermove", e => { moT[0] = e.clientX / innerWidth - .5; moT[1] = e.clientY / innerHeight - .5; }, { passive: true });
+    layout(); draw(performance.now()); wake();
+    stage.classList.add("is-ready");
+  })();
+
+  /* ---------------------------------------------------------- metal library */
+  let prices = {}; // sym -> USD per troy oz
+  const tabs = $("#libTabs"), panel = $("#libPanel");
+  let libCurrent = METALS[0];
+  METALS.forEach((m, i) => {
+    const b = document.createElement("button");
+    b.className = "lib__tab"; b.role = "tab"; b.id = "tab-" + m.id;
+    b.setAttribute("aria-selected", i === 0); b.setAttribute("aria-controls", "libPanel"); b.tabIndex = i === 0 ? 0 : -1;
+    b.innerHTML = `<i style="--sw:${m.sw}"></i>${m.name}<small>${m.sym}</small>`;
+    b.addEventListener("click", () => selectMetal(m, b));
+    tabs.appendChild(b);
+  });
+  tabs.addEventListener("keydown", e => {
+    const list = $$(".lib__tab", tabs), i = list.indexOf(document.activeElement);
+    if (i < 0) return;
+    const d = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key];
+    if (!d) return; e.preventDefault();
+    const n = list[(i + d + list.length) % list.length]; n.focus(); n.click();
+  });
+  // Every metal's sheet is rendered into the same grid cell, so the card always
+  // takes the height of the tallest one and never jumps when switching.
+  const stack = $("#libStack");
+  stack.innerHTML = METALS.map(m => `
+    <div class="lib__info" data-metal="${m.id}" aria-hidden="true">
+      <p class="lib__kicker">${m.kicker}</p>
+      <h3>${m.name}</h3>
+      <p>${m.desc}</p>
+      <div class="lib__specs">${m.specs.map(([k, v]) => `<div class="spec"><span>${k}</span><b>${v}</b></div>`).join("")}</div>
+      <div class="lib__live">${m.spot
+        ? `<i class="dot" data-status></i><span>Spot today</span><b data-lib-spot="${m.spot}">—</b>`
+        : `<span>Priced per project</span><b>On quote</b>`}<a href="${m.spot ? "#market" : "#start"}">${m.spot ? "See all prices" : "Ask for a quote"} →</a></div>
+    </div>`).join("");
+  function selectMetal(m, btn) {
+    libCurrent = m;
+    $$(".lib__tab", tabs).forEach(t => { const on = t === btn; t.setAttribute("aria-selected", on); t.tabIndex = on ? 0 : -1; });
+    if (btn) panel.setAttribute("aria-labelledby", btn.id);
+    $("#libSwatch").style.setProperty("--sw", m.sw);
+    $("#libSym").textContent = m.sym;
+    $$(".lib__info", stack).forEach(el => { const on = el.dataset.metal === m.id; el.classList.toggle("is-on", on); el.setAttribute("aria-hidden", !on); });
+  }
+  function renderLibPrice() {
+    $$("[data-lib-spot]", stack).forEach(b => {
+      const v = prices[b.dataset.libSpot];
+      b.textContent = v ? `${usd(v)} /oz · ${usd(v / G_PER_OZ)} /g` : "—";
+    });
+  }
+  selectMetal(METALS[0], $(".lib__tab", tabs));
+
+  /* ------------------------------------------------------------ metal desk */
+  let unit = "oz", lastPrices = {}, firstPrices = null, lastUpdate = null;
+  const spotsEl = $("#spots");
+  spotsEl.innerHTML = SPOTS.map(s => `
+    <article class="spot is-loading" data-sym="${s.sym}" style="--sw:${s.sw}">
+      <div class="spot__top"><i></i><b>${s.name}</b><small>${s.sym}</small></div>
+      <div class="spot__price" aria-live="polite">$0,000.00</div>
+      <div class="spot__unit">${UNITS[unit].label}</div>
+      <div class="spot__chg">&nbsp;</div>
+    </article>`).join("");
+
+  function renderSpots(flash) {
+    SPOTS.forEach(s => {
+      const el = $(`.spot[data-sym="${s.sym}"]`, spotsEl), v = prices[s.sym];
+      if (v == null) return;
+      el.classList.remove("is-loading");
+      const pe = $(".spot__price", el);
+      pe.textContent = usd(v * UNITS[unit].f);
+      $(".spot__unit", el).textContent = "USD " + UNITS[unit].label;
+      const chg = $(".spot__chg", el);
+      if (firstPrices && firstPrices[s.sym] && Math.abs(v - firstPrices[s.sym]) > 1e-6) {
+        const d = (v - firstPrices[s.sym]) / firstPrices[s.sym] * 100;
+        chg.className = "spot__chg " + (d >= 0 ? "up" : "down");
+        chg.textContent = `${d >= 0 ? "▲" : "▼"} ${Math.abs(d).toFixed(2)}% since you arrived`;
+      } else { chg.className = "spot__chg"; chg.textContent = lastUpdate ? (innerWidth < 560 ? "" : "Updated ") + nyTime(lastUpdate) : "Spot · USD"; }
+      if (flash && lastPrices[s.sym] && lastPrices[s.sym] !== v) {
+        pe.classList.add(v > lastPrices[s.sym] ? "flash-up" : "flash-down");
+        setTimeout(() => pe.classList.remove("flash-up", "flash-down"), 900);
+      }
+    });
+    const g = prices.XAU;
+    $("[data-nav-gold]").textContent = g ? usd(g, 0) : "—";
+    $("#ktable tbody").innerHTML = KARATS.map(([k, f]) =>
+      `<tr><td>${k}</td><td>${(f * 1000).toFixed(f === .999 ? 1 : 1).replace(/\.0$/, "")}</td><td>${g ? usd(g / G_PER_OZ * f) : "—"}</td><td>${g ? usd(g / G_PER_OZ * G_PER_DWT * f) : "—"}</td></tr>`).join("");
+    renderLibPrice(); calc();
+  }
+  $$(".unit").forEach(b => b.addEventListener("click", () => {
+    unit = b.dataset.unit;
+    $$(".unit").forEach(x => { x.classList.toggle("is-on", x === b); x.setAttribute("aria-pressed", x === b); });
+    $$(".spot__unit").forEach(u => u.textContent = "USD " + UNITS[unit].label);
+    renderSpots(false);
+  }));
+
+  function setStatus(kind, text, when) {
+    $$("[data-status]").forEach(d => { d.className = "dot is-" + kind; });
+    $("#feedStatus").textContent = text;
+    $("#feedStamp").textContent = when ? `${nyDate(when)} · ${nyTime(when)}` : " ";
+  }
+
+  async function fetchPrices() {
+    const base = (RIO.prices && RIO.prices.endpoint) || "https://api.gold-api.com/price/";
+    try {
+      const res = await Promise.all(SPOTS.map(s =>
+        fetch(base + s.sym, { cache: "no-store" }).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })));
+      const next = {}; let latest = 0;
+      res.forEach((j, i) => {
+        if (typeof j.price === "number" && j.price > 0) next[SPOTS[i].sym] = j.price;
+        const t = Date.parse(j.updatedAt); if (t > latest) latest = t;
+      });
+      if (!Object.keys(next).length) throw new Error("empty");
+      lastPrices = { ...prices }; prices = next;
+      if (!firstPrices) firstPrices = { ...next };
+      const when = new Date(latest || Date.now()); lastUpdate = when;
+      store.set("rio-prices", { prices: next, at: when.getTime() });
+      setStatus("live", "Live market prices", when);
+      renderSpots(true);
+    } catch (e) {
+      if (Object.keys(prices).length) { setStatus("stale", "Reconnecting — showing last update", null); return; }
+      const cached = store.get("rio-prices");
+      if (cached && cached.prices) {
+        prices = cached.prices;
+        setStatus("stale", "Live feed unavailable — last known prices", new Date(cached.at));
+        renderSpots(false);
+      } else {
+        setStatus("down", "Live feed unavailable — call us for today's price", null);
+        $$(".spot", spotsEl).forEach(el => { el.classList.remove("is-loading"); $(".spot__price", el).textContent = "—"; });
+      }
+    }
+  }
+  fetchPrices();
+  setInterval(() => { if (!document.hidden) fetchPrices(); }, (RIO.prices && RIO.prices.refreshMs) || 60000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) fetchPrices(); });
+
+  /* ----------------------------------------------------------- estimator */
+  let mode = "wax";
+  const alloySel = $("#calcAlloy"), wIn = $("#calcW");
+  alloySel.innerHTML = ALLOYS.map(a => `<option value="${a.id}"${a.id === "14k" ? " selected" : ""}>${a.name}</option>`).join("");
+  $$(".seg__b").forEach(b => b.addEventListener("click", () => {
+    mode = b.dataset.mode;
+    $$(".seg__b").forEach(x => { x.classList.toggle("is-on", x === b); x.setAttribute("aria-pressed", x === b); });
+    $("#calcWLabel").textContent = mode === "wax" ? "Wax weight" : "Metal weight";
+    calc();
+  }));
+  alloySel.addEventListener("change", calc); wIn.addEventListener("input", calc);
+  function calc() {
+    const a = ALLOYS.find(x => x.id === alloySel.value), w = parseFloat(wIn.value);
+    const out = $("#calcMetalW"), val = $("#calcValue");
+    if (!a || !(w > 0)) { out.textContent = "—"; val.textContent = "—"; return; }
+    const metalG = mode === "wax" ? w * a.sg : w;
+    out.textContent = `${metalG.toLocaleString("en-US", { maximumFractionDigits: 2 })} g`;
+    if (!a.sym) { val.textContent = "On quote"; return; }
+    const spot = prices[a.sym];
+    val.textContent = spot ? usd(metalG * a.fine * spot / G_PER_OZ) : "—";
+  }
+  calc();
+
+  /* -------------------------------------------------------------- globe */
+  (() => {
+    const cv = $("#globe"); if (!cv) return;
+    const ctx = cv.getContext("2d");
+    const R2D = Math.PI / 180;
+    const NYC = [40.76, -73.98];
+    const CITIES = [[51.5, -0.12], [48.85, 2.35], [40.42, -3.7], [25.2, 55.27], [35.68, 139.69], [22.32, 114.17], [-23.55, -46.63], [19.43, -99.13], [4.71, -74.07], [34.05, -118.24], [43.65, -79.38], [-33.87, 151.21], [45.46, 9.19], [32.08, 34.78], [1.35, 103.82]];
+    const pts = [];
+    for (let lat = -80; lat <= 80; lat += 6) {
+      const n = Math.max(6, Math.round(60 * Math.cos(lat * R2D)));
+      for (let i = 0; i < n; i++) pts.push([lat, -180 + i * 360 / n]);
+    }
+    const toV = ([lat, lon]) => [Math.cos(lat * R2D) * Math.sin(lon * R2D), Math.sin(lat * R2D), Math.cos(lat * R2D) * Math.cos(lon * R2D)];
+    const STILL = reduce || LOW;
+    // Geometry is computed once; each frame only rotates and projects it.
+    const dots = pts.map(toV), nyc = toV(NYC);
+    const ARC_N = 40;
+    const arcs = CITIES.map((c, i) => {
+      const b = toV(c), d = Math.acos(Math.min(1, nyc[0] * b[0] + nyc[1] * b[1] + nyc[2] * b[2])), lift = .05 + d * .045;
+      const path = [];
+      for (let j = 0; j <= ARC_N; j++) {
+        const k = j / ARC_N, v = slerp(nyc, b, k), h = 1 + Math.sin(k * Math.PI) * lift;
+        path.push([v[0] * h, v[1] * h, v[2] * h]);
+      }
+      return { b, path, off: i * .37 };
+    });
+    let W = 0, raf = 0, vis = false, last = 0, t0 = performance.now();
+    const resize = () => {
+      const s = Math.min(devicePixelRatio || 1, 1.5); W = cv.clientWidth;
+      cv.width = W * s; cv.height = W * s; ctx.setTransform(s, 0, 0, s, 0, 0);
+      if (STILL) frame(performance.now());
+    };
+    const tilt = 22 * R2D;
+    const ct = Math.cos(tilt), st = Math.sin(tilt);
+    let cr = 1, sr = 0;
+    const rot0 = t => (73.98 - 25) * R2D + Math.sin(t * .08) * .5;
+    function proj(v) {
+      const x = v[0], y = v[1], z = v[2];
+      const x1 = x * cr + z * sr, z1 = -x * sr + z * cr;
+      return [x1, y * ct - z1 * st, y * st + z1 * ct];
+    }
+    function slerp(a, b, t) {
+      const d = Math.acos(Math.min(1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2])), s = Math.sin(d);
+      const k1 = Math.sin((1 - t) * d) / s, k2 = Math.sin(t * d) / s;
+      return [a[0] * k1 + b[0] * k2, a[1] * k1 + b[1] * k2, a[2] * k1 + b[2] * k2];
+    }
+    function frame(now) {
+      const t = STILL ? 0 : Math.max(0, now - t0) / 1000;
+      const rot = rot0(t); cr = Math.cos(rot); sr = Math.sin(rot);
+      const r = W * .42, cx = W / 2, cy = W / 2;
+      ctx.clearRect(0, 0, W, W);
+      const g = ctx.createRadialGradient(cx - r * .3, cy - r * .4, r * .1, cx, cy, r * 1.05);
+      g.addColorStop(0, "rgba(10,43,181,.55)"); g.addColorStop(1, "rgba(7,11,31,0)");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, r * 1.05, 0, 7); ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,.12)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.stroke();
+      // dots batched into 4 brightness bands: 4 fills per frame instead of ~1,500
+      const bands = [[], [], [], []];
+      for (const v of dots) {
+        const [x, y, z] = proj(v, rot); if (z < 0) continue;
+        bands[Math.min(3, (z * 4) | 0)].push(cx + x * r, cy - y * r);
+      }
+      bands.forEach((b, i) => {
+        ctx.fillStyle = `rgba(255,255,255,${.1 + i * .09})`; ctx.beginPath();
+        for (let j = 0; j < b.length; j += 2) ctx.rect(b[j], b[j + 1], 1.4, 1.4);
+        ctx.fill();
+      });
+      for (const a of arcs) {
+        const prog = STILL ? 1 : ((t * .22 + a.off) % 1.6), end = Math.min(prog, 1) * ARC_N;
+        ctx.beginPath(); let on = false;
+        for (let i = 0; i <= end; i++) {
+          const [x, y, z] = proj(a.path[i], rot);
+          if (z < -.05) { on = false; continue; }
+          on ? ctx.lineTo(cx + x * r, cy - y * r) : ctx.moveTo(cx + x * r, cy - y * r); on = true;
+        }
+        const fade = prog > 1 ? Math.max(0, 1 - (prog - 1) / .6) : 1;
+        ctx.strokeStyle = `rgba(255,140,60,${.75 * fade})`; ctx.lineWidth = 1.3; ctx.stroke();
+        const [bx, by, bz] = proj(a.b, rot);
+        if (bz > 0 && prog >= 1) { ctx.fillStyle = `rgba(255,200,150,${fade})`; ctx.beginPath(); ctx.arc(cx + bx * r, cy - by * r, 2.2, 0, 7); ctx.fill(); }
+      }
+      const [nx, ny, nz] = proj(nyc, rot);
+      if (nz > 0) {
+        const px = cx + nx * r, py = cy - ny * r, pulse = STILL ? 0 : (t % 2) / 2;
+        ctx.strokeStyle = `rgba(255,107,15,${1 - pulse})`; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(px, py, 4 + pulse * 18, 0, 7); ctx.stroke();
+        ctx.fillStyle = "#FF6B0F"; ctx.beginPath(); ctx.arc(px, py, 4.5, 0, 7); ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,.85)"; ctx.font = "500 11px 'Geist Mono',monospace";
+        ctx.fillText("NEW YORK", px + 12, py + 4);
+      }
+    }
+    const loop = (now) => {
+      if (now - last >= FRAME_MS - 2) { last = now; frame(now); }
+      raf = vis && !STILL ? requestAnimationFrame(loop) : 0;
+    };
+    new IntersectionObserver(([e]) => { vis = e.isIntersecting; if (vis && !raf && !STILL) raf = requestAnimationFrame(loop); }, { rootMargin: "100px" }).observe(cv);
+    let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(resize, 150); }); resize();
+  })();
+
+  /* ------------------------------------------- hero curtain (stays put) */
+  const heroIn = $(".hero__in"), heroStage = $(".hero__stage");
+  const onCurtain = () => {
+    if (reduce) return;
+    const k = Math.min(1, Math.max(0, scrollY / innerHeight));
+    heroIn.style.opacity = 1 - k * 1.15;
+    heroIn.style.transform = `translateY(${-k * 70}px) scale(${1 - k * .04})`;
+    heroStage.style.opacity = 1 - k * .9;
+    heroStage.style.transform = `translateY(${-k * 40}px) scale(${1 - k * .05})`;
+  };
+  onScrollFrame(onCurtain);
+
+  /* ------------------------------------- principle: morphing jewel, scroll-led */
+  (() => {
+    const sec = $("#principle"); if (!sec) return;
+    const N = 160, TAU = Math.PI * 2, STILL = reduce || LOW;
+    const ell = (cx, cy, rx, ry) => Array.from({ length: 121 }, (_, i) => {
+      const t = -Math.PI / 2 + i / 120 * TAU; return [cx + rx * Math.cos(t), cy + ry * Math.sin(t)];
+    });
+    const curve = (fn, n = 120) => Array.from({ length: n + 1 }, (_, i) => fn(i / n));
+    const resample = (pts) => {
+      const L = [0];
+      for (let i = 1; i < pts.length; i++) L.push(L[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+      const tot = L[L.length - 1], out = []; let j = 1;
+      for (let k = 0; k < N; k++) {
+        const d = k / (N - 1) * tot;
+        while (j < L.length - 1 && L[j] < d) j++;
+        const f = (d - L[j - 1]) / ((L[j] - L[j - 1]) || 1);
+        out.push([pts[j - 1][0] + (pts[j][0] - pts[j - 1][0]) * f, pts[j - 1][1] + (pts[j][1] - pts[j - 1][1]) * f]);
+      }
+      return out;
+    };
+    const FORMS = [
+      { name: "Solitaire", metal: "Molten", col: ["#FFB35A", "#FF6B0F", "#7A1E00"],
+        a: ell(200, 262, 128, 62), b: ell(200, 266, 106, 47),
+        c: [[182, 118], [218, 118], [242, 142], [200, 202], [158, 142], [182, 118]] },
+      { name: "Pendant", metal: "18K Yellow", col: ["#FFE7A8", "#E0A93B", "#7A5212"],
+        a: curve(t => [80 + 240 * t, 40 + 150 * (1 - Math.pow(2 * t - 1, 2))]),
+        b: curve(t => { const u = t * TAU; return [200 + 62 * Math.sin(u) * Math.sin(u / 2), 205 + 78 * (1 - Math.cos(u))]; }),
+        c: ell(200, 300, 22, 28) },
+      { name: "Hoop", metal: "18K Rose", col: ["#FFD9C8", "#D98A6E", "#6E3324"],
+        a: ell(200, 238, 122, 122), b: ell(200, 238, 102, 102), c: ell(200, 94, 15, 15) },
+      { name: "Bangle", metal: "Platinum 950", col: ["#F4F7FB", "#9AA3B0", "#3A4150"],
+        a: ell(200, 220, 158, 74), b: ell(200, 232, 138, 58), c: ell(200, 146, 20, 11) },
+      { name: "Brilliant", metal: "Any metal", col: ["#FFB35A", "#0A2BB5", "#061A7A"],
+        a: [[150, 128], [250, 128], [302, 178], [200, 330], [98, 178], [150, 128]],
+        b: [[98, 178], [150, 128], [175, 178], [200, 128], [225, 178], [250, 128], [302, 178], [98, 178]],
+        c: [[150, 178], [200, 330], [250, 178]] }
+    ].map(f => ({ ...f, a: resample(f.a), b: resample(f.b), c: resample(f.c) }));
+
+    const el = { a: $("#ja"), b: $("#jb"), c: $("#jc") }, glint = $("#jglint");
+    const stops = [$("#jg0"), $("#jg1"), $("#jg2")];
+    const fig = $("#jfig"), metal = $("#jmetal"), list = $("#forms");
+    list.innerHTML = FORMS.map(f => `<li>${f.name}</li>`).join("");
+    const items = $$("li", list);
+
+    // split the manifesto into words so they can be "poured" in as you scroll
+    const text = $(".manifesto__text");
+    // one span per word (with its trailing space, so the underline runs across)
+    const parts = text.textContent.trim().split(/\s+/);
+    text.innerHTML = parts.map((w, i) => `<span class="w">${w}${i < parts.length - 1 ? " " : ""}</span>`).join("");
+    const words = $$(".w", text);
+
+    const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+    const mixHex = (x, y, k) => "rgb(" + hex(x).map((v, i) => Math.round(v + (hex(y)[i] - v) * k)).join(",") + ")";
+    const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+
+    let prog = 0, shown = -1, raf = 0, vis = false;
+    const t0 = performance.now();
+    function render(now) {
+      const t = STILL ? 0 : Math.max(0, now - t0) / 1000;
+      // the jewel loops on its own clock: hold each form, then melt into the next
+      // ~3.3 s holding each form, ~0.9 s melting into the next
+      const n = FORMS.length, s = t / 4.2, i = Math.floor(s) % n, j = (i + 1) % n;
+      const k = smooth(.785, 1, s - Math.floor(s)), A = FORMS[i], B = FORMS[j];
+      for (const key of ["a", "b", "c"]) {
+        let d = "";
+        const pa = A[key], pb = B[key];
+        for (let n = 0; n < N; n++) {
+          const w = STILL ? 0 : Math.sin(t * 1.2 + n * .09) * .9;
+          const x = pa[n][0] + (pb[n][0] - pa[n][0]) * k, y = pa[n][1] + (pb[n][1] - pa[n][1]) * k + w;
+          d += (n ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1);
+        }
+        el[key].setAttribute("d", d);
+      }
+      const gi = Math.floor(((t * .12) % 1) * N), ga = A.a[gi], gb = B.a[gi];
+      glint.setAttribute("cx", (ga[0] + (gb[0] - ga[0]) * k).toFixed(1));
+      glint.setAttribute("cy", (ga[1] + (gb[1] - ga[1]) * k).toFixed(1));
+      stops.forEach((st, j) => st.setAttribute("stop-color", mixHex(A.col[j], B.col[j], k)));
+      const cur = k < .5 ? i : j;
+      if (cur !== shown) {
+        shown = cur;
+        fig.textContent = "Fig. 0" + (cur + 1) + " — " + FORMS[cur].name;
+        metal.textContent = FORMS[cur].metal;
+        items.forEach((li, x) => li.classList.toggle("is-on", x === cur));
+      }
+    }
+    function update() {
+      const r = sec.getBoundingClientRect(), span = r.height - innerHeight;
+      prog = span > 0 ? Math.min(1, Math.max(0, -r.top / span)) : 0;
+      const wp = reduce ? 1 : Math.min(1, prog / .9);
+      const lit = Math.round(wp * words.length);
+      if (lit === litShown) return; litShown = lit;
+      words.forEach((w, j) => {
+        w.classList.toggle("is-on", j < lit);
+        w.classList.toggle("is-cur", !reduce && j < lit && j >= lit - 3);
+      });
+    }
+    let last = 0, litShown = -1;
+    const loop = (now) => {
+      if (now - last >= FRAME_MS - 2) { last = now; render(now); }
+      raf = vis && !STILL ? requestAnimationFrame(loop) : 0;
+    };
+    new IntersectionObserver(([e]) => { vis = e.isIntersecting; if (vis && !raf && !STILL) raf = requestAnimationFrame(loop); }).observe(sec);
+    onScrollFrame(() => { if (!vis && raf === 0 && litShown >= 0) return; update(); if (STILL) render(0); });
+    addEventListener("resize", update);
+    update(); render(performance.now());
+  })();
+
+  /* ------------------------------------------------- reveal + process line */
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add("is-seen"); io.unobserve(e.target); }
+  }), { threshold: .15 });
+  $$(".reveal").forEach(el => io.observe(el));
+
+  const steps = $("#steps"), stepEls = $$(".step", steps);
+  const onStep = () => {
+    const r = steps.getBoundingClientRect(), vh = innerHeight;
+    const p = Math.min(1, Math.max(0, (vh * .8 - r.top) / (vh * .55)));
+    steps.style.setProperty("--p", p);
+    stepEls.forEach((s, i) => s.classList.toggle("is-lit", p >= i / stepEls.length + .02));
+  };
+  onScrollFrame(onStep);
+
+  /* ------------------------------------------------------------- contact */
+  const C = RIO.contact || {};
+  const setC = (k, text, href) => { const a = $(`[data-c="${k}"]`); if (a) { a.textContent = text || "—"; if (href) a.href = href; } };
+  setC("address", C.address, C.address && "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(C.address));
+  setC("phone", C.phone, C.phone && "tel:" + C.phone.replace(/[^\d+]/g, ""));
+  setC("email", C.email, C.email && "mailto:" + C.email);
+
+  /* ---------------------------------------------------------------- form */
+  // Sending is scheduled for the next delivery: for now the form only shows a note.
+  const form = $("#form"), msg = $("#formMsg");
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    msg.className = "form__msg";
+    msg.textContent = `Online requests are coming soon. In the meantime, call us at ${C.phone || "our studio"} or write to ${C.email || "us"}.`;
+  });
+})();
