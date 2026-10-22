@@ -718,8 +718,9 @@ gl_FragColor=vec4(col,clamp(a,0.,1.));
     function render(now) {
       const t = STILL ? 0 : Math.max(0, now - t0) / 1000;
       // the jewel loops on its own clock: hold each form, then melt into the next
-      const n = FORMS.length, s = t / 3.4, i = Math.floor(s) % n, j = (i + 1) % n;
-      const k = smooth(.55, 1, s - Math.floor(s)), A = FORMS[i], B = FORMS[j];
+      // ~3.3 s holding each form, ~0.9 s melting into the next
+      const n = FORMS.length, s = t / 4.2, i = Math.floor(s) % n, j = (i + 1) % n;
+      const k = smooth(.785, 1, s - Math.floor(s)), A = FORMS[i], B = FORMS[j];
       for (const key of ["a", "b", "c"]) {
         let d = "";
         const pa = A[key], pb = B[key];
