@@ -774,11 +774,13 @@ gl_FragColor=vec4(pm,1.);
     const items = $$("li", list);
 
     // split the manifesto into words so they can be "poured" in as you scroll
-    const text = $(".manifesto__text");
-    // one span per word (with its trailing space, so the underline runs across)
-    const parts = text.textContent.trim().split(/\s+/);
-    text.innerHTML = parts.map((w, i) => `<span class="w">${w}${i < parts.length - 1 ? " " : ""}</span>`).join("");
-    const words = $$(".w", text);
+    // one span per word (with its trailing space, so the underline runs across);
+    // statement, paragraphs and closing line are read as one continuous sequence
+    $$(".manifesto__copy .js-words").forEach(el => {
+      const parts = el.textContent.trim().split(/\s+/);
+      el.innerHTML = parts.map((w, i) => `<span class="w">${w}${i < parts.length - 1 ? " " : ""}</span>`).join("");
+    });
+    const words = $$(".manifesto__copy .w");
 
     const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
     const mixHex = (x, y, k) => "rgb(" + hex(x).map((v, i) => Math.round(v + (hex(y)[i] - v) * k)).join(",") + ")";

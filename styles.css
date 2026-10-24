@@ -114,7 +114,7 @@ p{margin:0}
 .pour b{font-weight:500;color:rgba(255,255,255,.85);min-width:15ch}
 .hero__stage.is-fallback .pour{display:none}
 .hero__in{position:relative;z-index:1;padding-top:clamp(96px,14svh,130px);padding-bottom:clamp(32px,7svh,100px);will-change:transform,opacity}
-.hero__title{font-family:var(--display);font-size:clamp(34px,min(6.4vw,10.6svh),100px);line-height:.98;letter-spacing:-.04em;font-weight:700;max-width:11ch}
+.hero__title{font-family:var(--display);font-size:calc(clamp(34px,min(6.4vw,10.6svh),100px) - 2pt);line-height:.98;letter-spacing:-.04em;font-weight:700;max-width:11ch}
 .hero__title .line{display:block;overflow:hidden;padding-bottom:.06em}
 .hero__title .line>*{display:inline}
 .molten-word{background:linear-gradient(100deg,var(--molten-hi),var(--molten) 45%,#FFD39A 70%,var(--molten));-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -135,10 +135,17 @@ p{margin:0}
 .manifesto{position:relative;z-index:1;height:320vh;background:var(--paper);border-radius:32px 32px 0 0;box-shadow:0 -40px 80px -20px rgba(0,0,0,.55)}
 .manifesto__stage{position:sticky;top:0;height:100svh;display:flex;align-items:center;overflow:hidden;padding-top:72px}
 .manifesto__grid{display:grid;grid-template-columns:1.05fr 1fr;gap:clamp(30px,5vw,80px);align-items:center}
-.manifesto__text{font:500 clamp(20px,min(2.7vw,4.6svh),38px)/1.24 var(--display);letter-spacing:-.02em;max-width:22ch;color:rgba(10,16,51,.28);transition:color .4s}
-.manifesto__text .w{transition:color .35s,background-size .45s var(--ease);background:linear-gradient(var(--molten),var(--molten)) 0 94%/0 2px no-repeat}
-.manifesto__text .w.is-on{color:var(--text)}
-.manifesto__text .w.is-cur{background-size:100% 2px}
+.manifesto__text{font:600 clamp(26px,min(3.3vw,5.4svh),46px)/1.12 var(--display);letter-spacing:-.03em;max-width:16ch}
+.manifesto__body{margin-top:clamp(14px,2.6svh,26px);max-width:46ch}
+.manifesto__body p{font:400 clamp(15px,min(1.2vw,2.2svh),18px)/1.6 var(--sans)}
+.manifesto__body p+p{margin-top:12px}
+.manifesto__close{margin-top:clamp(14px,2.6svh,26px);font:600 clamp(18px,min(1.6vw,3svh),24px)/1.25 var(--display);letter-spacing:-.02em}
+.manifesto__copy .js-words{color:rgba(10,16,51,.26);transition:color .4s}
+.manifesto__copy .w{transition:color .35s,background-size .45s var(--ease);background:linear-gradient(var(--molten),var(--molten)) 0 94%/0 2px no-repeat}
+.manifesto__copy .w.is-on{color:var(--text)}
+.manifesto__body .w.is-on{color:#3A4166}
+.manifesto__close .w.is-on{color:var(--molten)}
+.manifesto__copy .w.is-cur{background-size:100% 2px}
 .forms{list-style:none;margin:clamp(18px,4svh,44px) 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px 18px;font:500 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .forms li{display:flex;align-items:center;gap:8px;opacity:.45;transition:opacity .3s,color .3s}
 .forms li::before{content:"";width:6px;height:6px;border:1px solid currentColor;transform:rotate(45deg);transition:background .3s}
@@ -377,14 +384,17 @@ p{margin:0}
 @media (max-width:860px){
   .manifesto{height:300vh}
   .manifesto__grid{grid-template-columns:1fr;gap:18px;align-content:center}
-  .manifesto__text{font-size:clamp(22px,6vw,30px);max-width:none}
-  .forms{margin-top:22px}
+  .manifesto__text{font-size:clamp(22px,6.4vw,30px);max-width:none}
+  .manifesto__body p{font-size:14.5px;line-height:1.55}
+  .manifesto__close{font-size:17px}
+  .forms{display:none}
+  .jewel{max-width:min(260px,30svh)!important}
   .jewel{max-width:min(320px,42svh)}
 }
 @media (max-width:560px){
   .btn--sm{display:none}
   .hero__in{padding-top:0}
-  .hero__title{font-size:clamp(34px,min(11.5vw,7svh),58px)}
+  .hero__title{font-size:calc(clamp(34px,min(11.5vw,7svh),58px) - 2pt)}
   .hero__cta .btn{flex:1 1 100%}
   .hero__foot{display:none}
   .hero__in{padding-bottom:40px}
@@ -410,6 +420,6 @@ p{margin:0}
 @media (prefers-reduced-motion:reduce){
   .manifesto{height:auto}
   .manifesto__stage{position:relative;height:auto;padding:110px 0}
-  .manifesto__text,.manifesto__text .w{color:var(--text);background:none}
+  .manifesto__copy .js-words,.manifesto__copy .w{color:var(--text);background:none}
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
