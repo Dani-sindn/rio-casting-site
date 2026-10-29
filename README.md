@@ -24,7 +24,7 @@ Todo está en `config.js`: dirección, teléfono, email y el feed de precios.
 1. Hero (WebGL): el logo como pieza 3D en perspectiva, montada sobre una pared con sombra suave. Un chorro de metal entra por la abertura superior y llena el interior del logo, en loop: 18K Yellow Gold → 18K Rose Gold → Platinum 950 → Sterling Silver. La geometría sale de un campo de distancia del logo oficial, así que los bordes se ven nítidos a cualquier tamaño. El hero queda fijo y el resto de la página sube encima como una cortina.
 2. The Rio Standard (antes "Our principle"): el texto se revela palabra por palabra con el scroll; la joya en línea SVG cambia de forma y de metal en un loop propio (solitario → colgante → aro → brazalete → brillante).
 3. (Se eliminaron la franja de datos y la marquesina; esa info se repite más abajo.)
-4. Our Advantage (antes "Capabilities"): 4 cards con íconos propios y hover (casting, CAD, impresión 3D castable, acabado).
+4. Our Advantage (antes "Capabilities"): 4 cards con íconos propios y hover (Metal Casting, CAD Design + 3D Printing, Scan & Engraving, Finishing).
 5. Material library: ficha interactiva por metal con su precio spot.
 6. Metal desk: precios en vivo (oz / g / dwt / kg), oro por kilate y estimador de metal (cera → metal → valor).
 7. Proceso en 4 pasos.

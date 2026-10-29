@@ -389,7 +389,7 @@ gl_FragColor=vec4(pm,1.);
       const narrow = innerWidth <= 860;
       let lh, cxp, cyp;
       if (narrow) {
-        const textTop = heroCopy ? heroCopy.getBoundingClientRect().top - stage.getBoundingClientRect().top : H * .55;
+        const textTop = heroCopy ? $(".hero__title", heroCopy).getBoundingClientRect().top - stage.getBoundingClientRect().top : H * .55;
         const room = Math.max(160, textTop - 84 - 34);
         lh = Math.min(room * .9, W * .58 * LH / LW); cxp = W * .5; cyp = 84 + room / 2;
       } else {
@@ -721,6 +721,8 @@ gl_FragColor=vec4(pm,1.);
   const heroIn = $(".hero__in"), heroStage = $(".hero__stage");
   const onCurtain = () => {
     if (reduce) return;
+    // on phones the hero grows with its copy and simply scrolls away
+    if (innerWidth <= 860) { heroIn.style.opacity = ""; heroIn.style.transform = ""; heroStage.style.opacity = ""; heroStage.style.transform = ""; return; }
     const k = Math.min(1, Math.max(0, scrollY / innerHeight));
     heroIn.style.opacity = 1 - k * 1.15;
     heroIn.style.transform = `translateY(${-k * 70}px) scale(${1 - k * .04})`;
