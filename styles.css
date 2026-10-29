@@ -106,14 +106,13 @@ p{margin:0}
   background:radial-gradient(120% 80% at 50% 120%,rgba(0,0,0,.8),transparent 60%)}
 .hero__stage{position:absolute;inset:0;z-index:0;will-change:transform,opacity}
 .hero__stage::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(4,5,12,.55) 0%,rgba(4,5,12,.2) 38%,rgba(4,5,12,0) 60%)}
-.hero__stage canvas{position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity 1.2s var(--ease)}
-.hero__stage.is-ready canvas{opacity:1}
-.hero__fallback{display:none;position:absolute;left:50%;top:52%;height:56%;transform:translate(-50%,-50%);color:#1a1f33}
-.hero__stage.is-fallback .hero__fallback{display:block}
-.pour{position:absolute;z-index:1;left:0;right:0;top:80%;margin:0;display:flex;justify-content:center;align-items:center;gap:10px;font:500 11px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.45)}
-.pour i{width:8px;height:8px;border-radius:50%;background:#E0A93B;box-shadow:0 0 12px currentColor;transition:background .8s}
-.pour b{font-weight:500;color:rgba(255,255,255,.85);min-width:15ch}
-.hero__stage.is-fallback .pour{display:none}
+/* the casting film: masked into the page so its edges dissolve into the dark */
+.hero__video{position:absolute;top:0;bottom:0;right:0;left:34vw;opacity:0;transition:opacity .9s ease;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 34%,#000 94%,transparent 100%),linear-gradient(180deg,transparent 0%,#000 16%,#000 78%,transparent 100%);
+  -webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,transparent 0%,#000 34%,#000 94%,transparent 100%),linear-gradient(180deg,transparent 0%,#000 16%,#000 78%,transparent 100%);mask-composite:intersect}
+.hero__video.is-on{opacity:1}
+.hero__video video{width:100%;height:100%;object-fit:cover;object-position:52% 55%;display:block}
+.hero__video::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 60% 50%,transparent 45%,rgba(4,5,12,.55) 100%)}
 .hero__in{position:relative;z-index:1;padding-top:clamp(88px,12svh,120px);padding-bottom:clamp(28px,5svh,80px);will-change:transform,opacity}
 .hero__title{font-family:var(--display);font-size:clamp(30px,min(4.2vw,6.4svh),66px);line-height:1.02;letter-spacing:-.015em;font-weight:700;max-width:14ch}
 .hero__title .line{display:block;overflow:hidden;padding-bottom:.06em}
@@ -382,7 +381,10 @@ p{margin:0}
   .steps::before,.steps::after{display:none}
   .world__globe{right:-40%;top:auto;bottom:-20%;transform:none;opacity:.45;width:110vw;height:110vw}
   .hero{justify-content:flex-end}
-  .hero__stage::after{background:linear-gradient(0deg,rgba(4,5,12,.7) 0%,rgba(4,5,12,.25) 45%,rgba(4,5,12,0) 65%)}
+  .hero__stage::after{background:none}
+  .hero__video{left:0!important;bottom:auto;height:calc(min(54svh,440px) + 40px);
+    -webkit-mask-image:linear-gradient(180deg,transparent 0%,#000 18%,#000 62%,transparent 100%);mask-image:linear-gradient(180deg,transparent 0%,#000 18%,#000 62%,transparent 100%)}
+  .hero__video video{object-position:55% 50%}
   .hero{position:relative;height:auto;min-height:100svh}
   .hero__in{padding-top:min(54svh,440px);padding-bottom:clamp(40px,8svh,80px)}
   .hero__kicker,.hero__lead,.hero__close{max-width:560px}

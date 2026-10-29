@@ -27,7 +27,7 @@ Todo está en `config.js`: dirección, teléfono, email y el feed de precios.
 
 ## Secciones
 
-1. Hero (WebGL): el logo (versión oficial con dos astas, R y barra) como pieza 3D en perspectiva, montada sobre una pared con sombra suave. Un chorro de metal entra por la abertura superior y llena el interior del logo, en loop: 18K Yellow Gold → 18K Rose Gold → Platinum 950 → Sterling Silver. La geometría sale de un campo de distancia del logo oficial, así que los bordes se ven nítidos a cualquier tamaño. El hero queda fijo y el resto de la página sube encima como una cortina.
+1. Hero: video del vertido de metal sobre el molde del logo (`assets/video/`), a la derecha del texto en escritorio y arriba en móvil. Sus bordes se funden con el fondo para no quedar bajo el texto, y se desvanece en el último segundo antes de reiniciarse, así el loop no corta. Se sirve en 1600 px (2,3 MB) o 960 px en móvil (1,1 MB), sin audio y con imagen de póster mientras carga. El hero queda fijo y el resto de la página sube encima como una cortina.
 2. The Rio Standard (antes "Our principle"): el texto se revela palabra por palabra con el scroll; la joya en línea SVG cambia de forma y de metal en un loop propio (solitario → colgante → aro → brazalete → brillante).
 3. (Se eliminaron la franja de datos y la marquesina; esa info se repite más abajo.)
 4. Our Advantage (antes "Capabilities"): 4 cards con íconos propios y hover (Metal Casting, CAD Design + 3D Printing, Scan & Engraving, Finishing).
@@ -38,7 +38,7 @@ Todo está en `config.js`: dirección, teléfono, email y el feed de precios.
 10. Formulario "Start a project".
 11. Contacto y footer.
 
-No incluye fotos de joyas, por decisión de producto. Las imágenes son generativas (shader, CSS y canvas), así que no hay fotos de stock.
+No incluye fotos de joyas, por decisión de producto. El hero usa el video propio del cliente; el resto de las imágenes son generativas (CSS, SVG y canvas), sin fotos de stock.
 
 ## Por confirmar con el cliente
 
@@ -48,7 +48,7 @@ No incluye fotos de joyas, por decisión de producto. Las imágenes son generati
 
 ## Rendimiento
 
-- **Hero (WebGL):** renderiza a un presupuesto fijo de píxeles (~380k en escritorio, ~200k en móvil, ~120k en equipos de gama baja) y el navegador lo escala. Va a 30 fps, usa la GPU de bajo consumo y se detiene cuando el hero queda tapado o la pestaña está oculta. Si detecta frames lentos, baja la resolución sola.
+- **Hero (video):** H.264 sin audio, comprimido para web (2,3 MB escritorio / 1,1 MB móvil). Se pausa cuando el hero queda tapado o la pestaña está oculta. Con "reducir movimiento" o ahorro de datos se muestra solo el póster. El hero 3D anterior (WebGL) queda en el historial de git y en `v2/`.
 - **Globo y joya SVG:** 30 fps. La geometría se calcula una sola vez y solo se animan mientras están en pantalla.
 - **Gama baja / ahorro de datos / "reducir movimiento":** las animaciones se muestran como imagen fija.
 - **Scroll:** un único listener agrupado por frame. Se quitaron las animaciones CSS infinitas que repintaban y los `backdrop-filter` sobre el canvas.

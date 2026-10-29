@@ -110,363 +110,39 @@
   $$("a", menu).forEach(a => a.addEventListener("click", () => setMenu(false)));
   addEventListener("keydown", e => { if (e.key === "Escape" && !menu.hidden) setMenu(false); });
 
-  /* ------------------------------------------- hero: the logo, cast in metal */
-  // v3: the logo as a solid, slightly turned 3D piece — a worn bronze bevel
-  // around a recessed tray. Molten metal pours into the top of the R's stem and
-  // fills the whole tray, cooling into the next metal each cycle.
-  const POURS = [
-    { name: "18K Yellow Gold", sw: "#E0A93B", b: [1.00, .90, .62], m: [.88, .64, .24], d: [.30, .16, .04] },
-    { name: "18K Rose Gold",   sw: "#D98A6E", b: [1.00, .85, .77], m: [.84, .50, .40], d: [.30, .12, .08] },
-    { name: "Platinum 950",    sw: "#B9C1CC", b: [.96, .98, 1.0], m: [.64, .68, .74], d: [.12, .13, .16] },
-    { name: "Sterling Silver", sw: "#D8DCE2", b: [1.00, 1.0, 1.0], m: [.80, .82, .86], d: [.18, .19, .22] }
-  ];
+  /* ------------------------------------------------- hero: the casting film */
+  // The film sits where the action is (right of the copy on desktop, above it on
+  // phones). It is masked into the dark page so it never sits under the text, and
+  // instead of a hard cut it fades out just before the end, restarts and fades in.
   (() => {
-    const heroCopy = $(".hero__in"), cv = $("#cast"), stage = $(".hero__stage"), cap = $("#pour"), capName = $("#pourName"), capDot = $("#pourDot");
-    if (!cv) return;
-    const gl = cv.getContext("webgl", { antialias: false, depth: false, stencil: false, premultipliedAlpha: true, powerPreference: "low-power" });
-    if (!gl) { stage.classList.add("is-fallback"); return; }
-
-    // ---- masks from the official SVG paths (logo units: 448 × 490)
-    const PAD = 56, LW = 485, LH = 505, TW = LW + PAD * 2, TH = LH + PAD * 2;
-    // the Río Casting mark (traced from the official artwork): two stems, the R and the bar
-    const MARK = ["M4.7 78.07 L70.7 191.47 L70.7 505 L4.7 505 Z", "M108.7 247.66 L173.7 359.34 L173.7 505 L108.7 505 Z",
-      "M120.56 0 L314.7 0.2 C388.7 0.2 466.7 43 466.7 151 C466.7 291 392.08 284.62 373.7 303 L484.8 505 L405.97 505 L259.6 253.5 L299.7 253.5 C361.7 253.5 405.7 221 405.7 151 C405.7 77 345.7 57.6 307.7 57.6 L182.7 57.6 L182.7 106.77 Z",
-      "M-0.04 0 L81.96 0 L375.87 505 L293.87 505 Z"].map(d => new Path2D(d));
-    // The logo (R and bar as one piece) becomes a signed distance field at 2× resolution:
-    // distance in logo units, positive inside. Edges stay crisp at any size and the
-    // bevel, recess, side walls and shadow are all measured from it.
-    const SS = 2, SW = TW * SS, SH = TH * SS;
-    const c2 = document.createElement("canvas"); c2.width = SW; c2.height = SH;
-    const x2 = c2.getContext("2d"); x2.scale(SS, SS); x2.translate(PAD, PAD); x2.fillStyle = "#fff";
-    MARK.forEach(p => x2.fill(p));
-    const alpha = x2.getImageData(0, 0, SW, SH).data;
-    const INF = 1e20;
-    const dt1 = (f, n, out) => { // Felzenszwalb–Huttenlocher 1D squared distance transform
-      const v = new Int32Array(n), z = new Float64Array(n + 1);
-      let k = 0; v[0] = 0; z[0] = -INF; z[1] = INF;
-      for (let q = 1; q < n; q++) {
-        let sq = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
-        while (sq <= z[k]) { k--; sq = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]); }
-        k++; v[k] = q; z[k] = sq; z[k + 1] = INF;
-      }
-      k = 0;
-      for (let q = 0; q < n; q++) { while (z[k + 1] < q) k++; out[q] = (q - v[k]) * (q - v[k]) + f[v[k]]; }
+    const wrap = $(".hero__video"), v = $("#heroVideo"), copy = $(".hero__in"), stage = $(".hero__stage");
+    if (!wrap || !v) return;
+    const narrow = () => innerWidth <= 860;
+    const FADE = .9;                                   // seconds of fade at each end of the loop
+    if (LOW || reduce) { wrap.classList.add("is-still", "is-on"); return; }   // poster only
+    v.src = narrow() ? v.dataset.srcSm : v.dataset.srcLg;
+    // desktop: start the film just left of where the copy ends, so its soft edge stays behind the text
+    const place = () => {
+      if (narrow()) { wrap.style.left = ""; return; }
+      const rg = document.createRange(); rg.selectNodeContents($(".hero__title", copy));
+      const textRight = Math.max(rg.getBoundingClientRect().right, $(".hero__lead", copy).getBoundingClientRect().right) - stage.getBoundingClientRect().left;
+      wrap.style.left = `${Math.round(Math.max(innerWidth * .3, textRight - 40))}px`;
     };
-    const edt = (on) => { // distance (px) from every pixel to the nearest "on" pixel
-      const g = new Float64Array(SW * SH);
-      for (let i = 0; i < g.length; i++) g[i] = on(i) ? 0 : INF;
-      const col = new Float64Array(SH), cOut = new Float64Array(SH);
-      for (let x = 0; x < SW; x++) {
-        for (let y = 0; y < SH; y++) col[y] = g[y * SW + x];
-        dt1(col, SH, cOut);
-        for (let y = 0; y < SH; y++) g[y * SW + x] = cOut[y];
-      }
-      const row = new Float64Array(SW), rOut = new Float64Array(SW);
-      for (let y = 0; y < SH; y++) {
-        for (let x = 0; x < SW; x++) row[x] = g[y * SW + x];
-        dt1(row, SW, rOut);
-        for (let x = 0; x < SW; x++) g[y * SW + x] = Math.sqrt(rOut[x]);
-      }
-      return g;
+    let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(place, 150); });
+    place(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
+    let fading = false, raf = 0;
+    const watch = () => {
+      if (!fading && v.duration && v.currentTime > v.duration - FADE) { fading = true; wrap.classList.remove("is-on"); }
+      raf = v.paused ? 0 : requestAnimationFrame(watch);
     };
-    const inside = (i) => alpha[i * 4 + 3] >= 128;
-    const dOut = edt(inside), dIn = edt(i => !inside(i));
-    const px = new Uint8Array(SW * SH * 4);
-    for (let i = 0; i < SW * SH; i++) {
-      const sd = (inside(i) ? dIn[i] - .5 : -(dOut[i] - .5)) / SS;   // logo units, + inside
-      px[i * 4] = Math.max(0, Math.min(255, Math.round((.5 + sd / 80) * 255)));      // ±40 units, fine
-      px[i * 4 + 1] = Math.max(0, Math.min(255, Math.round((.5 + sd / 320) * 255))); // ±160 units, far field
-      px[i * 4 + 3] = 255;
-    }
-    const tex = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, SW, SH, 0, gl.RGBA, gl.UNSIGNED_BYTE, px);
-    [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T].forEach(p => gl.texParameteri(gl.TEXTURE_2D, p, gl.CLAMP_TO_EDGE));
-    [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER].forEach(p => gl.texParameteri(gl.TEXTURE_2D, p, gl.LINEAR));
-
-    // bar geometry in texture uv (centre line, top → bottom)
-    const G = {
-      xTop: (PAD + 97.49) / TW, xBot: (PAD + 323.0) / TW,
-      vTop: PAD / TH, vBot: (PAD + 486.26) / TH
-    };
-
-    const vs = "attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}";
-    const fs = `#ifdef GL_FRAGMENT_PRECISION_HIGH
-precision highp float;
-#else
-precision mediump float;
-#endif
-uniform sampler2D uTex;uniform vec2 uRes,uTexel,uMo;uniform vec4 uRect;
-uniform float uT,uLevel,uFade,uHead,uTail,uHot,uLit,uSrc;uniform vec3 uB,uM,uD;
-const float TW=${TW}.,TH=${TH}.,LH=${LH}.;
-// the bar's centre line (logo-centred units); the pour enters at the top of the bar and slides down it
-float barC(float y){return ${(41 - LW / 2).toFixed(2)}+.5819*(y+${(LH / 2).toFixed(1)});}
-const float XS=${(41 - LW / 2).toFixed(2)};
-const float DEPTH=60.,DIST=1500.,YAW=-.34,PITCH=.12;
-// frame profile, measured as distance from the logo's edge (negative = outside)
-const float RIM=15.,FLAT0=-10.,FLAT1=-4.5,RECESS=7.;
-float hash(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
-float noise(vec2 p){vec2 i=floor(p),f=fract(p);vec2 u=f*f*(3.-2.*f);
-return mix(mix(hash(i),hash(i+vec2(1,0)),u.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),u.x),u.y);}
-vec3 molten(float x){x=clamp(x,0.,1.);
-vec3 c=mix(vec3(.42,.02,.01),vec3(.88,.1,.02),smoothstep(0.,.3,x));
-c=mix(c,vec3(1.,.38,.03),smoothstep(.25,.58,x));
-c=mix(c,vec3(1.,.74,.18),smoothstep(.55,.85,x));
-return mix(c,vec3(1.,.94,.68),smoothstep(.86,1.,x));}
-vec4 tx(vec2 L){vec2 uv=(L+vec2(TW,TH)*.5)/vec2(TW,TH);
- if(uv.x<0.||uv.y<0.||uv.x>1.||uv.y>1.)return vec4(0.);return texture2D(uTex,uv);}
-float sd(vec2 L){return (tx(L).r-.5)*80.;}           // signed distance to the logo, ±40 units
-float sdFar(vec2 L){return (tx(L).g-.5)*320.;}       // same, ±160 units
-// the inlet: a small funnel cut through the top of the frame, right above the stem,
-// so the pour has a way into the logo
-float inlet(vec2 L){
- float top=-LH*.5;
- float hw=9.5+max(top-L.y,0.)*.6;                    // widens towards the outside, like a sprue cup
- vec2 q=vec2(abs(L.x-XS)-hw,max(L.y-(top+2.),(top-RIM-6.)-L.y));
- return -(length(max(q,0.))+min(max(q.x,q.y),0.));}
-float sdE(vec2 L){return max(sd(L),inlet(L));}       // the frame's inner edge, inlet included
-// worn metal: soft mottling, fine scratches, rubbed patches — no grain
-vec3 worn(vec2 L,vec3 dark,vec3 light,float lum){
- float mott=noise(L*.018)*.6+noise(L*.045+5.)*.4;
- float s1=smoothstep(.94,.99,noise(vec2(L.x*.8+L.y*.3,(L.y-L.x*.3)*.022)));
- float s2=smoothstep(.95,.99,noise(vec2(L.y*.7-L.x*.45,(L.x*.7+L.y*.45)*.018)+9.));
- vec3 c=mix(dark,light,clamp(mott*.35+lum*.8,0.,1.));
- c*=.88+.18*mott;
- c+=(s1+s2)*.12*light;
- c*=1.-smoothstep(.6,.85,noise(L*.028+2.))*.15;
- return c;}
-void main(){
-vec2 fc=vec2(gl_FragCoord.x,uRes.y-gl_FragCoord.y);
-float sc=uRect.z/TW;vec2 ctr=uRect.xy+uRect.zw*.5;
-vec2 S=(fc-ctr)/sc;                                   // screen, logo units, y down
-float cy=cos(YAW),sy=sin(YAW),cp=cos(PITCH),sp=sin(PITCH);
-mat3 R=mat3(1.,0.,0.,0.,cp,sp,0.,-sp,cp)*mat3(cy,0.,-sy,0.,1.,0.,sy,0.,cy);
-vec3 rd=normalize(vec3(S,DIST));
-vec3 o=vec3(0.,0.,-DIST)*R,d=rd*R;                    // the ray in the logo's own space
-float t0=-o.z/d.z,t1=(DEPTH-o.z)/d.z;
-vec3 V=-rd;
-// one key light, high on the left and in front; it barely moves, so light and shadow always agree
-vec3 Lw=normalize(vec3(-.55+sin(uT*.15)*.05+uMo.x*.22,-.68+uMo.y*.12,-.62));
-vec3 Lo=Lw*R;
-float aaw=max(.3,.85/sc);                             // about one device pixel, in logo units
-vec3 hot=molten(.48);vec3 tint=mix(uM,hot,uHot*.75);
-vec3 bzD=vec3(.1,.068,.042),bzL=vec3(.7,.5,.32);     // worn bronze
-vec2 F=(o+d*t0).xy;
-float dF=sd(F);
-float outer=smoothstep(-RIM-aaw,-RIM+aaw,dF);
-
-// ---- the wall the piece is mounted on
-vec2 Wp=(o+d*t1).xy;
-float dW=sdFar(Wp);
-vec3 nWall=R*vec3(0.,0.,-1.);
-float wdiff=max(dot(nWall,Lw),0.);
-float spot=1.-smoothstep(80.,1000.,length(Wp-vec2(-50.,-40.)));
-float wm=noise(Wp*.005)*.6+noise(Wp*.014+4.)*.4;
-vec3 col=mix(vec3(.026,.022,.022),vec3(.16,.108,.07),spot*(.45+.55*wdiff))*(.9+.2*wm);
-if(dW>-RIM-170.){
- // soft cast shadow: walk from the wall towards the light through the piece's depth
- float occ=0.,run=DEPTH/max(-Lo.z,.25);
- for(int k=1;k<=16;k++){
-  float f=float(k)/16.;
-  float dq=sdFar(Wp+Lo.xy*run*f);
-  occ+=smoothstep(-RIM-12.-f*24.,-RIM+12.,dq)*(1.-f*.4);   // penumbra stays inside the mask margin
- }
- occ=clamp(occ/9.,0.,1.);
- col*=1.-occ*.36;
- col*=1.-.22*(1.-smoothstep(0.,34.,-RIM-dW));         // contact shadow where it meets the wall
- col+=tint*(1.-smoothstep(0.,34.,-RIM-dW))*uLit*.07;  // warm bounce from the metal
-}
-
-// ---- side walls (the piece's thickness)
-if(outer<.999&&dF>-RIM-140.){
- float tp=t0,th=-1.;
- for(int k=1;k<=24;k++){
-  float t=mix(t0,t1,float(k)/24.);
-  if(sd((o+d*t).xy)>-RIM){th=t;break;}
-  tp=t;
- }
- if(th>0.){
-  for(int k=0;k<5;k++){float tm=(tp+th)*.5;if(sd((o+d*tm).xy)>-RIM)th=tm;else tp=tm;}
-  vec3 Hp=o+d*th;
-  float e=.8;
-  vec2 g=vec2(sd(Hp.xy+vec2(e,0.))-sd(Hp.xy-vec2(e,0.)),sd(Hp.xy+vec2(0.,e))-sd(Hp.xy-vec2(0.,e)));
-  vec3 nW=R*normalize(vec3(-g,1e-4));
-  float diff=max(dot(nW,Lw),0.);
-  float spec=pow(max(dot(reflect(-Lw,nW),V),0.),24.);
-  float zf=Hp.z/DEPTH;
-  vec3 c=worn(Hp.xy+vec2(0.,Hp.z),bzD,bzL*.8,diff*.85+.06)+spec*bzL*.4;
-  c*=mix(1.,.7,zf);
-  col=mix(col,c,1.-outer);
- }
-}
-// ---- the face: a crisp bevelled frame around the logo, which is recessed as a tray
-if(outer>0.){
- float e=.7;
- float dE=sdE(F);
- vec2 g=vec2(sd(F+vec2(e,0.))-sd(F-vec2(e,0.)),sd(F+vec2(0.,e))-sd(F-vec2(0.,e)))/(2.*e);
- vec2 gE=vec2(sdE(F+vec2(e,0.))-sdE(F-vec2(e,0.)),sdE(F+vec2(0.,e))-sdE(F-vec2(0.,e)))/(2.*e);
- float wA=(1.-smoothstep(FLAT0-.6,FLAT0+.6,dF))*(1.-smoothstep(-1.,1.,inlet(F)));  // outer 45° chamfer
- float wC=smoothstep(FLAT1-.6,FLAT1+.6,dE);          // inner chamfer down into the tray
- vec3 nW=R*normalize(vec3(-g*wA+gE*wC*1.15,-1.));
- float diff=max(dot(nW,Lw),0.);
- float spec=pow(max(dot(reflect(-Lw,nW),V),0.),40.);
- vec3 frame=worn(F,bzD,bzL,diff)+spec*vec3(1.,.88,.7)*.85;
- // crisp creases where the bevel planes meet
- float crease=(1.-smoothstep(0.,.9,abs(dF-FLAT0)))*(1.-smoothstep(-1.,1.,inlet(F)))+(1.-smoothstep(0.,.9,abs(dE-FLAT1)));
- frame+=bzL*crease*.12*(.4+diff);
- frame+=tint*wC*uLit*.35;
- // the tray: exactly the logo, sunk into the frame; the frame shades its upper-left inner edge
- float tray=smoothstep(-aaw,aaw,dE);
- float shade=1.-smoothstep(-1.,1.6,sdE(F+Lo.xy*(RECESS/max(-Lo.z,.25))));
- vec3 trayc=worn(F*1.3+7.,vec3(.028,.028,.034),vec3(.2,.19,.19),.25+wdiff*.2);
- // molten metal filling the tray from the bottom
- float surf=mix(LH*.5,-LH*.5,uLevel)+(noise(vec2(F.x*.06,uT*2.))-.5)*2.;
- float depth=(F.y-surf)/LH;
- float fill=smoothstep(-1.,1.,F.y-surf)*uFade;
- vec3 nL=normalize(vec3((noise(F*.014+vec2(0.,uT*.12))-.5)*.8,(noise(F*.019+vec2(uT*.1,9.))-.5)*.8,-1.));
- vec3 nLW=R*nL;
- float band=smoothstep(.15,.95,.5+.5*sin(nLW.y*5.+nLW.x*2.5+F.y*.014));
- float specL=pow(max(dot(reflect(-Lw,nLW),V),0.),24.);
- vec3 metal=mix(uD,uM,.5+.5*band);metal=mix(metal,uB,band*band*.6)+uB*specL*.85;
- float h=(1.-smoothstep(0.,.22,depth))*uHot;
- float hn=h*(.8+.3*noise(vec2(F.x*.03,F.y*.04-uT*1.4)));
- vec3 liquid=mix(metal,molten(.25+.75*hn)*1.15,smoothstep(.05,.75,h)*.9);
- liquid+=molten(.92)*(1.-smoothstep(0.,1.4,abs(F.y-surf)))*uHot*.8;
- trayc=mix(trayc,liquid,fill);
- trayc*=1.-shade*.5;
- vec3 face=mix(frame,trayc,tray);
- col=mix(col,face,outer);
-}
-vec3 pm=col;
-
-// ---- the pour: falls straight down into the top of the stem, onto the rising metal
-float surfL=mix(LH*.5,-LH*.5,uLevel);
-vec3 Wi=R*vec3(barC(surfL),surfL,0.),Wt=R*vec3(XS,-LH*.5,0.);
-vec2 Si=Wi.xy*DIST/(DIST+Wi.z),St=Wt.xy*DIST/(DIST+Wt.z);
-float topY=-ctr.y/sc-10.;
-float headY=mix(topY,Si.y,uHead),tailY=mix(topY,Si.y,max(uTail,0.));
-float span=step(tailY,S.y)*step(S.y,headY)*step(uTail,.999)*step(.001,uHead);
-float xc=S.y<St.y?St.x:mix(St.x,Si.x,clamp((S.y-St.y)/max(Si.y-St.y,1.),0.,1.));
-float fallen=max(S.y-topY,0.),q=2.*sqrt(fallen);
-float f=clamp(fallen/max(St.y-topY,1.),0.,1.);
-float glug=.16*sin(uT*2.3)+.12*(noise(vec2(uT*1.4,.5))-.5);
-float sway=(sin(q*.42-uT*2.6)*1.4+(noise(vec2(q*.35-uT*2.2,3.))-.5)*2.4)*sin(3.1416*min(f*1.1,1.));
-float bulge=1.+.2*sin(q*1.25-uT*10.)+.16*(noise(vec2(q*.9-uT*7.,9.))-.5);
-float hw=mix(6.,3.4,sqrt(f))*(1.+glug)*bulge;
-float dd=abs(S.x-xc-sway);
-float body=1.-smoothstep(hw-aaw,hw+aaw,dd);
-float beads=smoothstep(-.15,.25,sin(q*2.6-uT*16.));
-body*=mix(beads,1.,smoothstep(0.,40.,S.y-tailY));
-float stream=body*span;
-float core=1.-clamp(dd/hw,0.,1.);
-float streak=.55+.45*noise(vec2(S.x*.25,S.y*.09-uT*16.));
-vec3 scol=molten(.3+.38*core+.22*streak+.12*noise(vec2(S.y*.05-uT*9.,uT*2.)));
-pm=mix(pm,scol*1.2,stream);
-float bloom=exp(-pow(length(S-Si)/9.,2.))*span*step(Si.y-2.,headY);
-pm+=molten(.95)*bloom*.9;
-gl_FragColor=vec4(pm,1.);
-}`;
-    const sh = (t, src) => { const o = gl.createShader(t); gl.shaderSource(o, src); gl.compileShader(o); return o; };
-    const pr = gl.createProgram();
-    gl.attachShader(pr, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, fs));
-    gl.linkProgram(pr);
-    if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) { console.warn(gl.getProgramInfoLog(pr)); stage.classList.add("is-fallback"); return; }
-    gl.useProgram(pr);
-    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-    const loc = gl.getAttribLocation(pr, "p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-    const U = {};
-    ["uTex", "uRes", "uTexel", "uMo", "uRect", "uT", "uLevel", "uFade", "uHead", "uTail", "uHot", "uLit", "uSrc", "uB", "uM", "uD"].forEach(k => U[k] = gl.getUniformLocation(pr, k));
-    gl.uniform1i(U.uTex, 0); gl.uniform2f(U.uTexel, 1 / TW, 1 / TH);
-
-    // ---- layout: where the logo sits inside the stage
-    // most of the frame is cheap wall; the costly parts only run near the piece
-    let budget = LOW ? 220000 : MOBILE ? 560000 : 1150000, scale = 1, rect = [0, 0, 1, 1];
-    const layout = () => {
-      const W = stage.clientWidth, H = stage.clientHeight;
-      scale = Math.min(devicePixelRatio || 1, 2, Math.sqrt(budget / Math.max(1, W * H)));
-      cv.width = Math.max(1, Math.round(W * scale)); cv.height = Math.max(1, Math.round(H * scale));
-      gl.viewport(0, 0, cv.width, cv.height);
-      // the stage now fills the hero (it is the wall); place the piece beside / above the copy
-      const narrow = innerWidth <= 860;
-      let lh, cxp, cyp;
-      if (narrow) {
-        const textTop = heroCopy ? $(".hero__title", heroCopy).getBoundingClientRect().top - stage.getBoundingClientRect().top : H * .55;
-        const room = Math.max(160, textTop - 84 - 34);
-        lh = Math.min(room * .9, W * .58 * LH / LW); cxp = W * .5; cyp = 84 + room / 2;
-      } else {
-        // keep clear air between the headline and the piece: measure where the copy ends
-        const sl = stage.getBoundingClientRect().left;
-        let textRight = W * .45;
-        if (heroCopy) {
-          const rg = document.createRange(); rg.selectNodeContents($(".hero__title", heroCopy));
-          textRight = Math.max(rg.getBoundingClientRect().right, $(".hero__lead", heroCopy).getBoundingClientRect().right,
-            $(".hero__cta", heroCopy).getBoundingClientRect().left + 360) - sl;
-        }
-        const gap = Math.max(96, W * .07), margin = Math.max(48, W * .05);
-        const room = Math.max(220, W - margin - (textRight + gap));
-        lh = Math.min(H * .5, room * .92 * LH / LW, 520);
-        cxp = textRight + gap + room / 2; cyp = H * .52;
-      }
-      const s = lh / LH;
-      rect = [(cxp - (PAD + LW / 2) * s) * scale, (cyp - (PAD + LH / 2) * s) * scale, TW * s * scale, TH * s * scale];
-      if (cap) cap.style.top = `${Math.round(cyp + LH / 2 * s + (narrow ? 12 : 34))}px`;
-      if (STILL) draw(performance.now());
-    };
-
-    // ---- the pour timeline (seconds within one cycle)
-    const CYCLE = 8.6, STILL = reduce || LOW;
-    const ease = x => x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
-    const clamp01 = x => Math.max(0, Math.min(1, x));
-    let idx = -1, start = performance.now(), mo = [0, 0], moT = [0, 0];
-    function draw(now) {
-      const T = STILL ? 0 : Math.max(0, now - start) / 1000, c = Math.floor(T / CYCLE), t = T - c * CYCLE;
-      const i = STILL ? 0 : c % POURS.length, P = POURS[i];
-      if (i !== idx) {
-        idx = i;
-        if (capName) { capName.textContent = P.name; capDot.style.background = P.sw; }
-      }
-      let level, head, tail, hot, fade;
-      if (STILL) { level = 1; head = 0; tail = 2; hot = 0; fade = 1; }
-      else {
-        head = Math.pow(clamp01(t / .9), 2);                       // fall progress, 0 → 1
-        level = ease(clamp01((t - .8) / 4.6));
-        tail = t < 5.1 ? -1 : Math.pow(clamp01((t - 5.1) / .8), 2);
-        hot = 1 - clamp01((t - 5.3) / 1.8);
-        fade = 1 - clamp01((t - 7.6) / 1);
-      }
-      mo[0] += (moT[0] - mo[0]) * .05; mo[1] += (moT[1] - mo[1]) * .05;
-      gl.uniform2f(U.uRes, cv.width, cv.height);
-      gl.uniform4f(U.uRect, rect[0], rect[1], rect[2], rect[3]);
-      gl.uniform1f(U.uT, STILL ? 2.2 : (T % 600) + 2);
-      gl.uniform1f(U.uLevel, level); gl.uniform1f(U.uHead, head); gl.uniform1f(U.uTail, tail);
-      gl.uniform1f(U.uHot, hot); gl.uniform1f(U.uFade, fade);
-      gl.uniform1f(U.uLit, level * level * fade);
-      gl.uniform3fv(U.uB, P.b); gl.uniform3fv(U.uM, P.m); gl.uniform3fv(U.uD, P.d);
-      gl.uniform2f(U.uMo, mo[0], mo[1]);
-      gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
-    }
-
-    let raf = 0, last = 0, slow = 0, visible = true;
-    const onTop = () => scrollY < innerHeight * 1.02;
-    const loop = (now) => {
-      const dt = now - last;
-      if (dt >= FRAME_MS - 2) {
-        if (last && dt > 55 && budget > 80000 && ++slow > 20) { budget *= .7; slow = 0; layout(); }
-        last = now; draw(now);
-      }
-      raf = visible && onTop() && !STILL ? requestAnimationFrame(loop) : (last = 0, 0);
-    };
-    const wake = () => { if (visible && onTop() && !raf && !STILL) raf = requestAnimationFrame(loop); };
-    onScrollFrame(wake);
-    new IntersectionObserver(([en]) => { visible = en.isIntersecting; wake(); }).observe(stage);
-    let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(layout, 150); });
-    if (!MOBILE) addEventListener("pointermove", e => { moT[0] = e.clientX / innerWidth - .5; moT[1] = e.clientY / innerHeight - .5; }, { passive: true });
-    layout(); draw(performance.now()); wake();
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { layout(); draw(performance.now()); });
-    stage.classList.add("is-ready");
+    v.addEventListener("playing", () => { wrap.classList.add("is-on"); if (!raf) raf = requestAnimationFrame(watch); });
+    v.addEventListener("ended", () => { fading = false; v.currentTime = 0; v.play().catch(() => {}); });
+    // only play while the hero can be seen
+    const onTop = () => scrollY < innerHeight * 1.02 || narrow() && scrollY < copy.getBoundingClientRect().bottom + scrollY;
+    const sync = () => { if (document.hidden || !onTop()) { if (!v.paused) v.pause(); } else if (v.paused) v.play().catch(() => {}); };
+    onScrollFrame(sync);
+    document.addEventListener("visibilitychange", sync);
+    v.play().catch(() => wrap.classList.add("is-on"));  // autoplay blocked: keep the poster frame visible
   })();
 
   /* ---------------------------------------------------------- metal library */
