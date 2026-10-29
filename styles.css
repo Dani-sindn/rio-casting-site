@@ -107,22 +107,22 @@ p{margin:0}
 .hero__stage{position:absolute;inset:0;z-index:0;will-change:transform,opacity}
 .hero__stage::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(4,5,12,.55) 0%,rgba(4,5,12,.2) 38%,rgba(4,5,12,0) 60%)}
 /* the casting film: masked into the page so its edges dissolve into the dark */
-.hero__video{position:absolute;top:0;bottom:0;right:0;left:34vw;opacity:0;transition:opacity .9s ease;
+.hero__video{position:absolute;top:0;bottom:0;right:0;left:43vw;opacity:0;transition:opacity .9s ease;
   -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 34%,#000 94%,transparent 100%),linear-gradient(180deg,transparent 0%,#000 16%,#000 78%,transparent 100%);
   -webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,transparent 0%,#000 34%,#000 94%,transparent 100%),linear-gradient(180deg,transparent 0%,#000 16%,#000 78%,transparent 100%);mask-composite:intersect}
 .hero__video.is-on{opacity:1}
 .hero__video video{width:100%;height:100%;object-fit:cover;object-position:52% 55%;display:block}
 .hero__video::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 60% 50%,transparent 45%,rgba(4,5,12,.55) 100%)}
 .hero__in{position:relative;z-index:1;padding-top:clamp(88px,12svh,120px);padding-bottom:clamp(28px,5svh,80px);will-change:transform,opacity}
-.hero__title{font-family:var(--display);font-size:clamp(40px,min(5.6vw,9.6svh),96px);line-height:1;letter-spacing:-.02em;font-weight:700;max-width:14ch}
+.hero__title{font-family:var(--display);font-size:clamp(36px,min(4.7vw,8.2svh),78px);line-height:1.03;letter-spacing:-.018em;font-weight:700;max-width:14ch}
 .hero__title .line{display:block;overflow:hidden;padding-bottom:.06em}
 .hero__title .line>*{display:inline}
 .molten-word{background:linear-gradient(100deg,var(--molten-hi),var(--molten) 45%,#FFD39A 70%,var(--molten));-webkit-background-clip:text;background-clip:text;color:transparent}
-.hero__kicker{max-width:min(560px,44vw);margin-top:clamp(18px,3.4svh,34px);font:500 clamp(19px,min(1.8vw,3.2svh),27px)/1.35 var(--display);letter-spacing:0;color:rgba(255,255,255,.92)}
+.hero__kicker{max-width:min(470px,36vw);margin-top:clamp(18px,3.2svh,30px);font:500 clamp(18px,min(1.5vw,2.8svh),23px)/1.42 var(--display);letter-spacing:0;color:rgba(255,255,255,.92)}
 .hero__lead{max-width:min(520px,42vw);margin-top:clamp(10px,1.8svh,18px);font-size:clamp(14px,min(1.1vw,2svh),16px);line-height:1.6;color:rgba(255,255,255,.66)}
 .hero__lead p+p{margin-top:.7em}
 .hero__close{max-width:min(520px,42vw);margin-top:clamp(12px,2svh,20px);font:600 clamp(15px,min(1.25vw,2.2svh),18px)/1.3 var(--display);color:var(--molten-hi)}
-.hero__cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:clamp(14px,2.8svh,28px)}
+.hero__cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:clamp(24px,4.4svh,44px)}
 .hero__foot{position:absolute;left:0;right:0;bottom:24px;display:flex;justify-content:flex-end;font:500 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.4);z-index:1}
 .hero__foot .scroll::after{content:"";display:inline-block;width:1px;height:14px;background:currentColor;margin-left:10px;vertical-align:middle;animation:drip 2s var(--ease) infinite}
 @keyframes drip{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
@@ -137,19 +137,19 @@ p{margin:0}
 /* ---------- manifesto · scrollytelling ---------- */
 .manifesto{position:relative;z-index:1;height:320vh;background:var(--paper);border-radius:32px 32px 0 0;box-shadow:0 -40px 80px -20px rgba(0,0,0,.55)}
 .manifesto__stage{position:sticky;top:0;height:100svh;display:flex;align-items:center;overflow:hidden;padding-top:72px}
-.manifesto__grid{display:grid;grid-template-columns:1.35fr .9fr;gap:clamp(30px,5vw,80px);align-items:center}
-.manifesto__text{font:700 clamp(36px,min(4.8vw,8svh),76px)/1.04 var(--display);letter-spacing:-.015em;max-width:15ch}
-.manifesto__body{margin-top:clamp(18px,3.2svh,32px);max-width:40ch}
-.manifesto__body p{font:500 clamp(19px,min(1.65vw,3svh),25px)/1.5 var(--display)}
-.manifesto__body p+p{margin-top:12px}
-.manifesto__close{margin-top:clamp(18px,3.2svh,32px);font:700 clamp(24px,min(2.4vw,4.2svh),36px)/1.15 var(--display);letter-spacing:-.005em}
+.manifesto__grid{display:grid;grid-template-columns:1.08fr 1fr;gap:clamp(36px,6vw,96px);align-items:center}
+.manifesto__text{font:700 clamp(32px,min(3.8vw,6.6svh),60px)/1.06 var(--display);letter-spacing:-.012em;max-width:15ch}
+.manifesto__body{margin-top:clamp(20px,3.4svh,34px);max-width:42ch}
+.manifesto__body p{font:500 clamp(18px,min(1.38vw,2.6svh),22px)/1.58 var(--display)}
+.manifesto__body p+p{margin-top:.8em}
+.manifesto__close{margin-top:clamp(22px,3.8svh,38px);font:700 clamp(21px,min(1.9vw,3.4svh),30px)/1.2 var(--display);letter-spacing:-.005em}
 .manifesto__copy .js-words{color:rgba(10,16,51,.4);transition:color .4s}
 .manifesto__copy .w{transition:color .35s,background-size .45s var(--ease);background:linear-gradient(var(--molten),var(--molten)) 0 94%/0 2px no-repeat}
 .manifesto__copy .w.is-on{color:var(--text)}
 .manifesto__body .w.is-on{color:var(--text)}
 .manifesto__close .w.is-on{color:var(--molten)}
 .manifesto__copy .w.is-cur{background-size:100% 2px}
-.jewel{margin:0;position:relative;width:100%;max-width:min(520px,calc(100svh - 190px));justify-self:center}
+.jewel{margin:0;position:relative;width:100%;max-width:min(580px,calc(100svh - 150px));justify-self:center}
 .jewel svg{width:100%;height:auto;overflow:visible}
 .jewel__guides{fill:none;stroke:rgba(10,16,51,.1);stroke-width:1}
 .jewel__s{fill:none;stroke:url(#jg);stroke-linecap:round;stroke-linejoin:round}
@@ -385,17 +385,17 @@ p{margin:0}
 @media (max-width:860px){
   .manifesto{height:300vh}
   .manifesto__grid{grid-template-columns:1fr;gap:18px;align-content:center}
-  .manifesto__text{font-size:clamp(30px,8.6vw,40px);max-width:none}
-  .manifesto__body p{font-size:17.5px;line-height:1.5}
-  .manifesto__close{font-size:23px}
+  .manifesto__text{font-size:clamp(28px,8vw,36px);max-width:none}
+  .manifesto__body p{font-size:16.5px;line-height:1.55}
+  .manifesto__close{font-size:20px}
   .jewel{max-width:min(260px,30svh)!important}
   .jewel{max-width:min(320px,42svh)}
 }
 @media (max-width:560px){
   .btn--sm{display:none}
   .hero__in{padding-top:min(50svh,400px)}
-  .hero__title{font-size:clamp(36px,10.6vw,50px)}
-  .hero__kicker{font-size:19px}
+  .hero__title{font-size:clamp(34px,9.8vw,46px)}
+  .hero__kicker{font-size:18px;max-width:none}
   .hero__lead{font-size:14.5px}
   .hero__cta .btn{flex:1 1 100%}
   .hero__foot{display:none}

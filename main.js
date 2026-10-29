@@ -115,21 +115,13 @@
   // phones). It is masked into the dark page so it never sits under the text, and
   // instead of a hard cut it fades out just before the end, restarts and fades in.
   (() => {
-    const wrap = $(".hero__video"), v = $("#heroVideo"), copy = $(".hero__in"), stage = $(".hero__stage");
+    const wrap = $(".hero__video"), v = $("#heroVideo"), copy = $(".hero__in");
     if (!wrap || !v) return;
     const narrow = () => innerWidth <= 860;
     const FADE = .9;                                   // seconds of fade at each end of the loop
     if (LOW || reduce) { wrap.classList.add("is-still", "is-on"); return; }   // poster only
     v.src = narrow() ? v.dataset.srcSm : v.dataset.srcLg;
-    // desktop: start the film just left of where the copy ends, so its soft edge stays behind the text
-    const place = () => {
-      if (narrow()) { wrap.style.left = ""; return; }
-      const rg = document.createRange(); rg.selectNodeContents($(".hero__title", copy));
-      const textRight = Math.max(rg.getBoundingClientRect().right, $(".hero__kicker", copy).getBoundingClientRect().right) - stage.getBoundingClientRect().left;
-      wrap.style.left = `${Math.round(Math.max(innerWidth * .3, textRight - 40))}px`;
-    };
-    let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(place, 150); });
-    place(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
+    // the film keeps a fixed place (CSS): it is the protagonist, the copy works around it
     let fading = false, raf = 0;
     const watch = () => {
       if (!fading && v.duration && v.currentTime > v.duration - FADE) { fading = true; wrap.classList.remove("is-on"); }
