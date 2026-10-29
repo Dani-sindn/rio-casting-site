@@ -4,6 +4,12 @@
 
 Landing en inglés para Rio Casting (casting de metales en Nueva York para clientes en todo el mundo). Es un sitio estático, sin build: `index.html`, `styles.css`, `main.js` y `config.js`.
 
+## Marca
+
+- Logo recreado en vector desde el arte oficial (coincide ~98,5 % con la referencia): `assets/rio-logo.svg` (versión para fondo claro) y `assets/rio-logo-white.svg` (para fondo oscuro), con el nombre "RÍO CASTING INC." y "CREATION WITHOUT LIMITS"; el símbolo solo está en `assets/rio-mark.svg` / `assets/rio-mark-white.svg`. El azul de la barra es `#04448A` (en fondos oscuros se usa el tono más claro `#3D74D1`).
+- Los textos del logo usan **Jost**, la alternativa abierta más cercana a la letra del logo (estilo Futura). Si el cliente tiene la fuente original o el logo en curvas, conviene reemplazar esos textos.
+- Tipografía del sitio: **Jost** para titulares, etiquetas y marca; Geist para textos; Geist Mono para datos y precios.
+
 ## Ver en local
 
 ```bash
@@ -21,7 +27,7 @@ Todo está en `config.js`: dirección, teléfono, email y el feed de precios.
 
 ## Secciones
 
-1. Hero (WebGL): el logo como pieza 3D en perspectiva, montada sobre una pared con sombra suave. Un chorro de metal entra por la abertura superior y llena el interior del logo, en loop: 18K Yellow Gold → 18K Rose Gold → Platinum 950 → Sterling Silver. La geometría sale de un campo de distancia del logo oficial, así que los bordes se ven nítidos a cualquier tamaño. El hero queda fijo y el resto de la página sube encima como una cortina.
+1. Hero (WebGL): el logo (versión oficial con dos astas, R y barra) como pieza 3D en perspectiva, montada sobre una pared con sombra suave. Un chorro de metal entra por la abertura superior y llena el interior del logo, en loop: 18K Yellow Gold → 18K Rose Gold → Platinum 950 → Sterling Silver. La geometría sale de un campo de distancia del logo oficial, así que los bordes se ven nítidos a cualquier tamaño. El hero queda fijo y el resto de la página sube encima como una cortina.
 2. The Rio Standard (antes "Our principle"): el texto se revela palabra por palabra con el scroll; la joya en línea SVG cambia de forma y de metal en un loop propio (solitario → colgante → aro → brazalete → brillante).
 3. (Se eliminaron la franja de datos y la marquesina; esa info se repite más abajo.)
 4. Our Advantage (antes "Capabilities"): 4 cards con íconos propios y hover (Metal Casting, CAD Design + 3D Printing, Scan & Engraving, Finishing).

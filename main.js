@@ -127,17 +127,18 @@
     if (!gl) { stage.classList.add("is-fallback"); return; }
 
     // ---- masks from the official SVG paths (logo units: 448 × 490)
-    const PAD = 56, LW = 448, LH = 490, TW = LW + PAD * 2, TH = LH + PAD * 2;
-    const R_STEM = new Path2D("M0 0H56.378V486.26H0V0Z");
-    const R_BOWL = new Path2D("M305.38 0.236285C380.045 4.49519 439.278 66.3887 439.278 142.119C439.278 203.245 400.688 255.351 346.542 275.416L447.5 462.769L421.575 476.108L395.65 489.446L285.507 284.239H220.813V486.26H164.436V0H305.38V0.236285ZM220.813 227.861H305.38V227.654C349.995 224.636 385.249 187.499 385.249 142.119C385.249 96.7397 349.995 59.6002 305.38 56.5821V56.378H220.813V227.861Z");
-    const BAR = new Path2D("M291.286 486.26L63.4253 0H131.549L354.711 486.26H291.286Z");
+    const PAD = 56, LW = 485, LH = 505, TW = LW + PAD * 2, TH = LH + PAD * 2;
+    // the Río Casting mark (traced from the official artwork): two stems, the R and the bar
+    const MARK = ["M4.7 78.07 L70.7 191.47 L70.7 505 L4.7 505 Z", "M108.7 247.66 L173.7 359.34 L173.7 505 L108.7 505 Z",
+      "M120.56 0 L314.7 0.2 C388.7 0.2 466.7 43 466.7 151 C466.7 291 392.08 284.62 373.7 303 L484.8 505 L405.97 505 L259.6 253.5 L299.7 253.5 C361.7 253.5 405.7 221 405.7 151 C405.7 77 345.7 57.6 307.7 57.6 L182.7 57.6 L182.7 106.77 Z",
+      "M-0.04 0 L81.96 0 L375.87 505 L293.87 505 Z"].map(d => new Path2D(d));
     // The logo (R and bar as one piece) becomes a signed distance field at 2× resolution:
     // distance in logo units, positive inside. Edges stay crisp at any size and the
     // bevel, recess, side walls and shadow are all measured from it.
     const SS = 2, SW = TW * SS, SH = TH * SS;
     const c2 = document.createElement("canvas"); c2.width = SW; c2.height = SH;
     const x2 = c2.getContext("2d"); x2.scale(SS, SS); x2.translate(PAD, PAD); x2.fillStyle = "#fff";
-    x2.fill(R_STEM); x2.fill(R_BOWL, "evenodd"); x2.fill(BAR);
+    MARK.forEach(p => x2.fill(p));
     const alpha = x2.getImageData(0, 0, SW, SH).data;
     const INF = 1e20;
     const dt1 = (f, n, out) => { // Felzenszwalb–Huttenlocher 1D squared distance transform
@@ -199,7 +200,9 @@ precision mediump float;
 uniform sampler2D uTex;uniform vec2 uRes,uTexel,uMo;uniform vec4 uRect;
 uniform float uT,uLevel,uFade,uHead,uTail,uHot,uLit,uSrc;uniform vec3 uB,uM,uD;
 const float TW=${TW}.,TH=${TH}.,LH=${LH}.;
-const float XS=${(28.19 - LW / 2).toFixed(2)};       // centre of the R's stem, logo-centred units
+// the bar's centre line (logo-centred units); the pour enters at the top of the bar and slides down it
+float barC(float y){return ${(41 - LW / 2).toFixed(2)}+.5819*(y+${(LH / 2).toFixed(1)});}
+const float XS=${(41 - LW / 2).toFixed(2)};
 const float DEPTH=60.,DIST=1500.,YAW=-.34,PITCH=.12;
 // frame profile, measured as distance from the logo's edge (negative = outside)
 const float RIM=15.,FLAT0=-10.,FLAT1=-4.5,RECESS=7.;
@@ -339,7 +342,7 @@ vec3 pm=col;
 
 // ---- the pour: falls straight down into the top of the stem, onto the rising metal
 float surfL=mix(LH*.5,-LH*.5,uLevel);
-vec3 Wi=R*vec3(XS,surfL,0.),Wt=R*vec3(XS,-LH*.5,0.);
+vec3 Wi=R*vec3(barC(surfL),surfL,0.),Wt=R*vec3(XS,-LH*.5,0.);
 vec2 Si=Wi.xy*DIST/(DIST+Wi.z),St=Wt.xy*DIST/(DIST+Wt.z);
 float topY=-ctr.y/sc-10.;
 float headY=mix(topY,Si.y,uHead),tailY=mix(topY,Si.y,max(uTail,0.));
