@@ -125,7 +125,7 @@
     const place = () => {
       if (narrow()) { wrap.style.left = ""; return; }
       const rg = document.createRange(); rg.selectNodeContents($(".hero__title", copy));
-      const textRight = Math.max(rg.getBoundingClientRect().right, $(".hero__lead", copy).getBoundingClientRect().right) - stage.getBoundingClientRect().left;
+      const textRight = Math.max(rg.getBoundingClientRect().right, $(".hero__kicker", copy).getBoundingClientRect().right) - stage.getBoundingClientRect().left;
       wrap.style.left = `${Math.round(Math.max(innerWidth * .3, textRight - 40))}px`;
     };
     let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(place, 150); });
@@ -450,9 +450,9 @@
 
     const el = { a: $("#ja"), b: $("#jb"), c: $("#jc") }, glint = $("#jglint");
     const stops = [$("#jg0"), $("#jg1"), $("#jg2")];
-    const fig = $("#jfig"), metal = $("#jmetal"), list = $("#forms");
-    list.innerHTML = FORMS.map(f => `<li>${f.name}</li>`).join("");
-    const items = $$("li", list);
+    const fig = $("#jfig"), metal = $("#jmetal"), list = $("#forms");   // optional labels
+    if (list) list.innerHTML = FORMS.map(f => `<li>${f.name}</li>`).join("");
+    const items = list ? $$("li", list) : [];
 
     // split the manifesto into words so they can be "poured" in as you scroll
     // one span per word (with its trailing space, so the underline runs across);
@@ -492,8 +492,8 @@
       const cur = k < .5 ? i : j;
       if (cur !== shown) {
         shown = cur;
-        fig.textContent = "Fig. 0" + (cur + 1) + " — " + FORMS[cur].name;
-        metal.textContent = FORMS[cur].metal;
+        if (fig) fig.textContent = "Fig. 0" + (cur + 1) + " — " + FORMS[cur].name;
+        if (metal) metal.textContent = FORMS[cur].metal;
         items.forEach((li, x) => li.classList.toggle("is-on", x === cur));
       }
     }
