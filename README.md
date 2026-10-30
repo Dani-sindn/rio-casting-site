@@ -30,7 +30,7 @@ Todo está en `config.js`: dirección, teléfono, email y el feed de precios.
 1. Hero: video del vertido de metal sobre el molde del logo (`assets/video/`), a la derecha del texto en escritorio y arriba en móvil. Sus bordes se funden con el fondo para no quedar bajo el texto, y se desvanece en el último segundo antes de reiniciarse, así el loop no corta. Se sirve en 1600 px (2,3 MB) o 960 px en móvil (1,1 MB), sin audio y con imagen de póster mientras carga. El hero queda fijo y el resto de la página sube encima como una cortina.
 2. The Rio Standard (antes "Our principle"): texto grande y de peso que se revela palabra por palabra con el scroll; al lado, la joya en línea SVG cambia de forma y de metal en un loop propio (sin etiquetas).
 3. (Se eliminaron la franja de datos y la marquesina; esa info se repite más abajo.)
-4. Our Advantage (antes "Capabilities"): 4 cards con íconos propios y hover (Metal Casting, CAD Design + 3D Printing, Scan & Engraving, Finishing).
+4. Our Advantage (antes "Capabilities"): 4 cards con íconos propios y hover (Metal Casting, CAD Design + 3D Printing, Laser Scanning & Engraving, Finishing).
 5. Material library: ficha interactiva por metal con su precio spot.
 6. Metal desk: precios en vivo (oz / g / dwt / kg), oro por kilate y estimador de metal (cera → metal → valor).
 7. Proceso en 4 pasos.
