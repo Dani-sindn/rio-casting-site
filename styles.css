@@ -183,6 +183,7 @@ p{margin:0}
   text-decoration:underline;text-decoration-color:var(--molten);text-decoration-thickness:2px;text-underline-offset:6px;transition:color .2s}
 .cap__more::before{content:"";position:absolute;inset:0;border-radius:inherit}
 .cap:hover .cap__more{color:var(--molten)}
+.nw{white-space:nowrap}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 /* capability detail: the full card in a modal dialog */
@@ -211,15 +212,23 @@ html:has(.capd[open]){overflow:hidden}
 .capd__body li::before{content:"";flex:none;width:14px;height:2px;margin-top:.68em;background:var(--molten)}
 
 /* ---------- metal library ---------- */
-.lib{display:grid;grid-template-columns:260px 1fr;gap:40px;align-items:stretch}
-.lib__tabs{display:flex;flex-direction:column;border-top:1px solid var(--line)}
-.lib__tab{display:flex;align-items:center;gap:14px;padding:16px 4px;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;cursor:pointer;font-size:16px;color:var(--muted);transition:color .2s,padding .3s var(--ease)}
-.lib__tab i{width:22px;height:22px;border-radius:50%;background:var(--sw);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),0 2px 6px rgba(0,0,0,.12);flex:none}
-.lib__tab small{margin-left:auto;font:500 11px var(--mono);letter-spacing:.08em;opacity:.7}
-.lib__tab:hover{color:var(--text)}
-.lib__tab[aria-selected="true"]{color:var(--text);padding-left:14px;font-weight:600}
-.lib__panel{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);background:var(--paper);border-radius:24px;overflow:hidden;box-shadow:0 1px 0 var(--line),0 30px 60px -40px rgba(7,11,31,.35)}
-.lib__swatch{position:relative;min-height:420px;background:var(--sw,#ccc);transition:background .6s var(--ease);overflow:hidden}
+.lib{display:grid;gap:16px}
+.lib__grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px}
+.lib__tile{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:8px 8px 14px;border:1px solid var(--line);border-radius:14px;background:var(--paper);cursor:pointer;text-align:left;
+  transition:transform .3s var(--ease),border-color .2s,box-shadow .3s var(--ease),background .2s}
+.lib__chip{position:relative;width:100%;aspect-ratio:16/10;margin-bottom:8px;border-radius:9px;background:var(--sw);overflow:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
+.lib__chip::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.5) 46%,transparent 62%);transform:translateX(-60%);transition:transform .8s var(--ease)}
+.lib__name{padding:0 6px;font:600 16px/1.2 var(--display);color:var(--text)}
+.lib__tile small{padding:0 6px;font:500 10.5px/1.3 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.lib__tile:hover{transform:translateY(-3px);border-color:rgba(10,16,51,.28);box-shadow:0 18px 30px -24px rgba(7,11,31,.5)}
+.lib__tile:hover .lib__chip::after{transform:translateX(60%)}
+.lib__tile[aria-pressed="true"]{background:#fff;border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink),0 18px 30px -24px rgba(7,11,31,.5)}
+.lib__tile[aria-pressed="true"] small{color:var(--molten)}
+.lib__ask{display:flex;flex-direction:column;justify-content:center;gap:6px;padding:16px 14px;border:1px dashed rgba(10,16,51,.3);border-radius:14px;font:500 15px/1.25 var(--display);color:var(--muted);transition:border-color .2s,color .2s}
+.lib__ask b{font-weight:600;font-size:16px;color:var(--royal)}
+.lib__ask:hover{border-color:var(--royal);color:var(--text)}
+.lib__panel{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);background:var(--paper);border-radius:24px;overflow:hidden;box-shadow:0 1px 0 var(--line),0 30px 60px -40px rgba(7,11,31,.35)}
+.lib__swatch{position:relative;min-height:360px;background:var(--sw,#ccc);transition:background .6s var(--ease);overflow:hidden}
 .lib__swatch::before{content:"";position:absolute;inset:-20%;background:conic-gradient(from 200deg at 60% 40%,rgba(255,255,255,0) 0deg,rgba(255,255,255,.55) 40deg,rgba(255,255,255,0) 90deg,rgba(0,0,0,.25) 200deg,rgba(255,255,255,.3) 300deg,rgba(255,255,255,0) 360deg);mix-blend-mode:overlay;filter:blur(40px)}
 .lib__swatch::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(100deg,rgba(255,255,255,.05) 0 2px,rgba(0,0,0,.03) 2px 4px);mix-blend-mode:overlay}
 .lib__sym{position:absolute;left:28px;bottom:20px;z-index:1;font:700 clamp(76px,10vw,150px)/1 var(--display);letter-spacing:-.01em;color:rgba(255,255,255,.55);mix-blend-mode:soft-light;text-shadow:0 1px 0 rgba(255,255,255,.4)}
@@ -378,12 +387,6 @@ html:has(.capd[open]){overflow:hidden}
   .burger{display:block}
   .caps{grid-template-columns:repeat(2,1fr)}
   .spots{grid-template-columns:repeat(2,1fr)}
-  .lib{grid-template-columns:1fr}
-  .lib__tabs{flex-direction:row;overflow-x:auto;border:0;gap:8px;scrollbar-width:none;margin:0 calc(var(--gut)*-1);padding:0 var(--gut)}
-  .lib__tabs::-webkit-scrollbar{display:none}
-  .lib__tab{flex:none;border:1px solid var(--line);border-radius:10px;padding:8px 16px 8px 8px!important;font-size:14px}
-  .lib__tab small{display:none}
-  .lib__tab[aria-selected="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
 }
 @media (max-width:860px){
   .nav__tick{display:none}
@@ -391,7 +394,9 @@ html:has(.capd[open]){overflow:hidden}
   .market__meta{justify-self:start;text-align:left}
   .status{justify-content:flex-start}
   .lib__panel{grid-template-columns:1fr}
-  .lib__swatch{min-height:220px}
+  .lib__swatch{min-height:200px}
+  .lib__grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .lib__ask{grid-column:span 3}
   .desk{grid-template-columns:1fr}
   .start{display:flex;flex-direction:column}
   .start__copy{display:contents}
@@ -437,6 +442,12 @@ html:has(.capd[open]){overflow:hidden}
   .spots{grid-template-columns:1fr 1fr;gap:10px}
   .spot{padding:18px}
   .lib__specs{grid-template-columns:1fr 1fr;gap:8px}
+  .lib__grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .lib__ask{grid-column:span 2}
+  .lib__tile{padding:6px 6px 12px}
+  .lib__name{padding:0 4px;font-size:14.5px}
+  .lib__tile small{padding:0 4px;font-size:9.5px;letter-spacing:.02em}
+  .lib__swatch{min-height:150px}
   .spec{padding:10px 12px}
   .spec b{font-size:14px}
   .spot__price{font-size:22px}

@@ -31,7 +31,7 @@ Todo está en `config.js`: dirección, teléfono, email y el feed de precios.
 2. The Rio Standard (antes "Our principle"): texto grande y de peso que se revela palabra por palabra con el scroll; al lado, la joya en línea SVG cambia de forma y de metal en un loop propio (sin etiquetas).
 3. (Se eliminaron la franja de datos y la marquesina; esa info se repite más abajo.)
 4. Our Advantage (antes "Capabilities"): 4 cards con íconos propios y hover (Metal Casting, CAD Design + 3D Printing, Laser Scanning & Engraving, Finishing). Cada card muestra un extracto y un enlace "See more" que abre la card completa (subtítulo, textos y "Our Capabilities") en un modal (`<dialog>`, se cierra con la X, Esc o tocando fuera).
-5. Material library: ficha interactiva por metal con su precio spot.
+5. Material library ("We can cast any precious & non-precious metal."): cuadrícula de 13 metales (Gold, Platinum, Sterling Silver, Palladium, Brass, Bronze, White Metal, Aluminum, Steel, Copper, Cobalt, Thai Gold, Gunmetal) más una celda "Another alloy? Ask us". Al elegir uno se muestra su ficha debajo (descripción, datos y precio spot si aplica). Los datos de cada metal están en `METALS` dentro de `main.js`.
 6. Metal desk: precios en vivo (oz / g / dwt / kg), oro por kilate y estimador de metal (cera → metal → valor).
 7. Proceso en 4 pasos.
 8. Worldwide: globo animado con rutas desde NYC.
@@ -44,6 +44,7 @@ No incluye fotos de joyas, por decisión de producto. El hero usa el video propi
 
 - Teléfono: el mockup dice "212-7640-7674"; se usó 212-764-7674.
 - Si el oro 100% reciclado y el white metal siguen vigentes.
+- Fichas de metales nuevos (Aluminum, Steel, Copper, Cobalt, Thai Gold, Gunmetal): textos y datos de referencia redactados para la web; conviene que el cliente los revise. "Thai Gold" se interpretó como oro tailandés 23K (96,5 %).
 - Las fotos reales del taller y del equipo, si se quieren agregar más adelante.
 
 ## Rendimiento

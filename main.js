@@ -52,35 +52,60 @@
     { id: "bronze",name:"Bronze",           sym: null,  fine: 0,    sg: 8.8 }
   ];
 
+  const P = "Precious metal", NP = "Non-precious metal";
   const METALS = [
-    { id: "gold", name: "Gold", sym: "Au", kicker: "Precious metal", spot: "XAU",
+    { id: "gold", name: "Gold", sym: "Au", kicker: P, spot: "XAU",
       sw: "linear-gradient(140deg,#FFF3C9 0%,#F1C463 30%,#C98F2A 60%,#7A5212 100%)",
       desc: "Our most-poured metal. Every karat from 10K to 22K, alloyed in yellow, white or rose to match exactly what you have in mind.",
       specs: [["Karats", "10K · 14K · 18K · 22K"], ["Colors", "Yellow · White · Rose"], ["Best for", "Fine jewelry · Production"]] },
-    { id: "platinum", name: "Platinum", sym: "Pt", kicker: "Precious metal", spot: "XPT",
+    { id: "platinum", name: "Platinum", sym: "Pt", kicker: P, spot: "XPT",
       sw: "linear-gradient(140deg,#FFFFFF 0%,#DDE3EA 30%,#A3ACB8 65%,#4D5563 100%)",
       desc: "Dense, naturally white and built to last. Platinum's high melting point demands real experience at the bench — it's where three decades show.",
       specs: [["Alloy", "Pt 950"], ["Melts at", "≈ 1,768 °C"], ["Character", "Dense · Hypoallergenic"]] },
-    { id: "palladium", name: "Palladium", sym: "Pd", kicker: "Precious metal", spot: "XPD",
-      sw: "linear-gradient(140deg,#FBFAF6 0%,#D9D4C9 30%,#A39C8E 65%,#5A5448 100%)",
-      desc: "A naturally white platinum-group metal that's lighter on the hand — a refined alternative for white pieces and bands.",
-      specs: [["Alloy", "Pd 950"], ["Melts at", "≈ 1,555 °C"], ["Character", "Light · Naturally white"]] },
-    { id: "silver", name: "Sterling Silver", sym: "Ag", kicker: "Precious metal", spot: "XAG",
+    { id: "silver", name: "Sterling Silver", sym: "Ag", kicker: P, spot: "XAG",
       sw: "linear-gradient(140deg,#FFFFFF 0%,#E9ECF0 30%,#B5BBC4 65%,#636A75 100%)",
       desc: "Bright, versatile and ideal for collections, samples and production runs that still deserve a precious-metal finish.",
       specs: [["Alloy", "925"], ["Melts at", "≈ 893 °C"], ["Best for", "Collections · Runs"]] },
-    { id: "brass", name: "Brass", sym: "CuZn", kicker: "Fine metal", spot: null,
+    { id: "palladium", name: "Palladium", sym: "Pd", kicker: P, spot: "XPD",
+      sw: "linear-gradient(140deg,#FBFAF6 0%,#D9D4C9 30%,#A39C8E 65%,#5A5448 100%)",
+      desc: "A naturally white platinum-group metal that's lighter on the hand — a refined alternative for white pieces and bands.",
+      specs: [["Alloy", "Pd 950"], ["Melts at", "≈ 1,555 °C"], ["Character", "Light · Naturally white"]] },
+    { id: "brass", name: "Brass", sym: "CuZn", kicker: NP, spot: null,
       sw: "linear-gradient(140deg,#FFF0B8 0%,#E2C163 30%,#B08A2E 65%,#5C4512 100%)",
       desc: "Warm, golden and economical. Perfect for prototypes, fit samples and fashion pieces before committing to precious metal.",
       specs: [["Base", "Copper · Zinc"], ["Melts at", "≈ 900–940 °C"], ["Best for", "Prototypes · Fashion"]] },
-    { id: "bronze", name: "Bronze", sym: "CuSn", kicker: "Fine metal", spot: null,
+    { id: "bronze", name: "Bronze", sym: "CuSn", kicker: NP, spot: null,
       sw: "linear-gradient(140deg,#F8D2A8 0%,#D4935A 30%,#A0582A 65%,#4A2410 100%)",
       desc: "Deep, earthy color with strong detail retention — loved for sculptural work and statement pieces.",
       specs: [["Base", "Copper · Tin"], ["Melts at", "≈ 950 °C"], ["Best for", "Sculptural work"]] },
-    { id: "white", name: "White Metal", sym: "Wm", kicker: "Fine metal", spot: null,
+    { id: "white", name: "White Metal", sym: "Wm", kicker: NP, spot: null,
       sw: "linear-gradient(140deg,#F4F4F2 0%,#CFCFCB 30%,#9A9A96 65%,#55554F 100%)",
       desc: "A low-melt alloy for fast, affordable production — costume jewelry, components and test runs.",
-      specs: [["Type", "Low-melt alloy"], ["Speed", "Fast production"], ["Best for", "Costume · Components"]] }
+      specs: [["Type", "Low-melt alloy"], ["Speed", "Fast production"], ["Best for", "Costume · Components"]] },
+    { id: "aluminum", name: "Aluminum", sym: "Al", kicker: NP, spot: null,
+      sw: "linear-gradient(140deg,#F7F9FB 0%,#D5DBE2 30%,#A9B1BB 65%,#68717C 100%)",
+      desc: "Remarkably light and corrosion-resistant — for oversized pieces, components and prototypes where weight matters.",
+      specs: [["Melts at", "≈ 660 °C"], ["Character", "Very light · Corrosion-resistant"], ["Best for", "Large pieces · Components"]] },
+    { id: "steel", name: "Steel", sym: "Fe", kicker: NP, spot: null,
+      sw: "linear-gradient(140deg,#EEF0F2 0%,#BFC4CA 30%,#868D95 65%,#3F454C 100%)",
+      desc: "Strong, durable stainless steel for hard-wearing pieces, men's jewelry and hardware that has to hold up every day.",
+      specs: [["Type", "Stainless steel"], ["Melts at", "≈ 1,400 °C"], ["Character", "Strong · Tarnish-resistant"]] },
+    { id: "copper", name: "Copper", sym: "Cu", kicker: NP, spot: null,
+      sw: "linear-gradient(140deg,#FFD9C2 0%,#E59466 30%,#B5562E 65%,#5E2410 100%)",
+      desc: "A rich, warm red metal that captures fine detail — for artistic pieces, samples and work that develops a natural patina.",
+      specs: [["Melts at", "≈ 1,085 °C"], ["Character", "Warm red · Patinas naturally"], ["Best for", "Artistic pieces · Samples"]] },
+    { id: "cobalt", name: "Cobalt", sym: "Co", kicker: NP, spot: null,
+      sw: "linear-gradient(140deg,#FFFFFF 0%,#DCE2EC 30%,#9DA8BA 65%,#4A5468 100%)",
+      desc: "A bright white, very hard cobalt alloy that resists scratches — a favorite for wedding bands and men's rings.",
+      specs: [["Type", "Cobalt-chrome alloy"], ["Melts at", "≈ 1,300–1,400 °C"], ["Character", "Bright white · Very hard"]] },
+    { id: "thai", name: "Thai Gold", sym: "23K", kicker: P, spot: "XAU", spotLabel: "Gold spot today",
+      sw: "linear-gradient(140deg,#FFF0B0 0%,#F5BE3A 30%,#D18B10 60%,#7A4A00 100%)",
+      desc: "High-purity gold with the deep, saturated yellow of the Thai tradition — for rich, traditional pieces that show their gold content.",
+      specs: [["Purity", "96.5% · 23K"], ["Color", "Deep yellow"], ["Best for", "Traditional pieces"]] },
+    { id: "gunmetal", name: "Gunmetal", sym: "GM", kicker: NP, spot: null,
+      sw: "linear-gradient(140deg,#C9CDD3 0%,#80868F 30%,#4A4F57 65%,#1E2126 100%)",
+      desc: "A dark, durable bronze of copper, tin and zinc that holds fine detail — for a deep, gray-toned look on hard-wearing pieces.",
+      specs: [["Base", "Copper · Tin · Zinc"], ["Melts at", "≈ 1,000 °C"], ["Character", "Dark tone · Durable"]] }
   ];
 
   /* -------------------------------------------------------------- formatting */
@@ -139,23 +164,21 @@
 
   /* ---------------------------------------------------------- metal library */
   let prices = {}; // sym -> USD per troy oz
-  const tabs = $("#libTabs"), panel = $("#libPanel");
+  const grid = $("#libGrid"), panel = $("#libPanel");
   let libCurrent = METALS[0];
-  METALS.forEach((m, i) => {
-    const b = document.createElement("button");
-    b.className = "lib__tab"; b.role = "tab"; b.id = "tab-" + m.id;
-    b.setAttribute("aria-selected", i === 0); b.setAttribute("aria-controls", "libPanel"); b.tabIndex = i === 0 ? 0 : -1;
-    b.innerHTML = `<i style="--sw:${m.sw}"></i>${m.name}<small>${m.sym}</small>`;
-    b.addEventListener("click", () => selectMetal(m, b));
-    tabs.appendChild(b);
-  });
-  tabs.addEventListener("keydown", e => {
-    const list = $$(".lib__tab", tabs), i = list.indexOf(document.activeElement);
-    if (i < 0) return;
-    const d = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key];
-    if (!d) return; e.preventDefault();
-    const n = list[(i + d + list.length) % list.length]; n.focus(); n.click();
-  });
+  grid.innerHTML = METALS.map(m => `
+    <button class="lib__tile" type="button" data-metal="${m.id}" aria-pressed="false" aria-controls="libPanel">
+      <span class="lib__chip" style="--sw:${m.sw}"></span>
+      <span class="lib__name">${m.name}</span>
+      <small>${m.kicker === P ? "Precious" : "Non-precious"}</small>
+    </button>`).join("") + `
+    <a class="lib__ask" href="#start"><span>Another alloy?</span><b>Ask us →</b></a>`;
+  $$(".lib__tile", grid).forEach((b, i) => b.addEventListener("click", () => {
+    selectMetal(METALS[i]);
+    // on phones the sheet sits under the grid: bring it into view
+    const r = panel.getBoundingClientRect();
+    if (r.top > innerHeight * .7 || r.bottom < 80) panel.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" });
+  }));
   // Every metal's sheet is rendered into the same grid cell, so the card always
   // takes the height of the tallest one and never jumps when switching.
   const stack = $("#libStack");
@@ -166,13 +189,12 @@
       <p>${m.desc}</p>
       <div class="lib__specs">${m.specs.map(([k, v]) => `<div class="spec"><span>${k}</span><b>${v}</b></div>`).join("")}</div>
       <div class="lib__live">${m.spot
-        ? `<i class="dot" data-status></i><span>Spot today</span><b data-lib-spot="${m.spot}">—</b>`
+        ? `<i class="dot" data-status></i><span>${m.spotLabel || "Spot today"}</span><b data-lib-spot="${m.spot}">—</b>`
         : `<span>Priced per project</span><b>On quote</b>`}<a href="${m.spot ? "#market" : "#start"}">${m.spot ? "See all prices" : "Ask for a quote"} →</a></div>
     </div>`).join("");
-  function selectMetal(m, btn) {
+  function selectMetal(m) {
     libCurrent = m;
-    $$(".lib__tab", tabs).forEach(t => { const on = t === btn; t.setAttribute("aria-selected", on); t.tabIndex = on ? 0 : -1; });
-    if (btn) panel.setAttribute("aria-labelledby", btn.id);
+    $$(".lib__tile", grid).forEach(t => t.setAttribute("aria-pressed", t.dataset.metal === m.id));
     $("#libSwatch").style.setProperty("--sw", m.sw);
     $("#libSym").textContent = m.sym;
     $$(".lib__info", stack).forEach(el => { const on = el.dataset.metal === m.id; el.classList.toggle("is-on", on); el.setAttribute("aria-hidden", !on); });
@@ -183,7 +205,7 @@
       b.textContent = v ? `${usd(v)} /oz · ${usd(v / G_PER_OZ)} /g` : "—";
     });
   }
-  selectMetal(METALS[0], $(".lib__tab", tabs));
+  selectMetal(METALS[0]);
 
   /* ------------------------------------------------------------ metal desk */
   let unit = "oz", lastPrices = {}, firstPrices = null, lastUpdate = null;

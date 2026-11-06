@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400..700&family=Geist:wght@400..600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <link rel="preload" as="image" href="assets/video/hero-poster.jpg" />
-<link rel="stylesheet" href="styles.css?v=51" />
+<link rel="stylesheet" href="styles.css?v=53" />
 <script>document.documentElement.classList.add("js")</script>
 </head>
 <body>
@@ -195,14 +195,14 @@
     <div class="head head--split">
       <div>
         <p class="eyebrow"><span class="bar"></span>Material library</p>
-        <h2>We can cast <em>any</em> precious metal.</h2>
+        <h2>We can cast <em>any</em> precious &amp; <span class="nw">non-precious</span> metal.</h2>
       </div>
       <p class="head__lead">Pick a material to see what we pour. Don't see your alloy? Ask — if it melts, we've probably cast it.</p>
     </div>
 
     <div class="lib">
-      <div class="lib__tabs" role="tablist" aria-label="Metals" id="libTabs"></div>
-      <div class="lib__panel" id="libPanel" role="tabpanel">
+      <div class="lib__grid" id="libGrid" role="group" aria-label="Metals"></div>
+      <div class="lib__panel" id="libPanel" role="region" aria-label="Metal details" aria-live="polite">
         <div class="lib__swatch" id="libSwatch"><span class="lib__sym" id="libSym">Au</span></div>
         <div class="lib__stack" id="libStack"></div>
       </div>
@@ -373,6 +373,6 @@
 </footer>
 
 <script src="config.js?v=46" defer></script>
-<script src="main.js?v=49" defer></script>
+<script src="main.js?v=54" defer></script>
 </body>
 </html>
