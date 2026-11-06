@@ -108,11 +108,12 @@ p{margin:0}
 .hero__stage::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(4,5,12,.55) 0%,rgba(4,5,12,.2) 38%,rgba(4,5,12,0) 60%)}
 /* the casting film: the whole R stays in view right of the copy; the frame's own
    edges are masked so the mould dissolves into the dark page */
-.hero__video{position:absolute;top:0;bottom:0;right:0;left:43vw;opacity:0;transition:opacity .9s ease;
-  /* film width: as large as fits between the copy's right edge (--tr) and the viewport, the R starting 40px clear of the text */
-  --tr:calc(max(0px,(100vw - 1240px) / 2) + var(--gut) + min(540px,38vw));--fw:min(145.8svh,(100vw - var(--tr) - 40px) * 1.41)}
+.hero__video{position:absolute;inset:0;opacity:0;transition:opacity .9s ease;
+  /* the film sits centred in the space right of the copy (--tr = copy's right edge); --zoom < 1 leaves air around the R */
+  --zoom:.82;--tr:calc(max(0px,(100vw - 1240px) / 2) + var(--gut) + min(540px,38vw));
+  --fw:min(120svh,(100vw - var(--tr) - 40px) * 1.41 * var(--zoom));--cx:calc((var(--tr) + 100vw) / 2)}
 .hero__video.is-on{opacity:1}
-.hero__video video{position:absolute;top:50%;right:calc(var(--fw) * -.094);width:var(--fw);height:calc(var(--fw) * .5625);transform:translateY(-50%);object-fit:cover;display:block;
+.hero__video video{position:absolute;top:50%;left:calc(var(--cx) - var(--fw) * .518);width:var(--fw);height:calc(var(--fw) * .5625);transform:translateY(-50%);object-fit:cover;display:block;
   -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 19%,#000 88%,transparent 100%),linear-gradient(180deg,transparent 0%,#000 15%,#000 89%,transparent 100%);
   -webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,transparent 0%,#000 19%,#000 88%,transparent 100%),linear-gradient(180deg,transparent 0%,#000 15%,#000 89%,transparent 100%);mask-composite:intersect}
 .hero__in{position:relative;z-index:1;padding-top:clamp(88px,12svh,120px);padding-bottom:clamp(28px,5svh,80px);will-change:transform,opacity}
@@ -409,8 +410,8 @@ html:has(.capd[open]){overflow:hidden}
   .world__globe{right:-40%;top:auto;bottom:-20%;transform:none;opacity:.45;width:110vw;height:110vw}
   .hero{justify-content:flex-end}
   .hero__stage::after{background:none}
-  .hero__video{left:0!important;bottom:auto;height:calc(min(54svh,440px) + 40px);--fw:min(138vw,150svh)}
-  .hero__video video{right:auto;left:calc(50vw - var(--fw) * .518);top:54%}
+  .hero__video{bottom:auto;height:calc(min(54svh,440px) + 40px);--fw:min(118vw,128svh);--cx:50vw}
+  .hero__video video{top:54%}
   .hero{position:relative;height:auto;min-height:100svh}
   .hero__in{padding-top:min(54svh,440px);padding-bottom:clamp(40px,8svh,80px)}
   .hero__sub{max-width:560px}
