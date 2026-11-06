@@ -526,6 +526,23 @@
   };
   onScrollFrame(onStep);
 
+  /* ------------------------------------------------- capability details */
+  // "See more" opens the whole card (intro, details, capabilities) in a modal dialog.
+  (() => {
+    const dlg = $("#capDialog"), body = $("#capDialogBody");
+    if (!dlg || !dlg.showModal) return;
+    $$(".cap__more").forEach(btn => btn.addEventListener("click", () => {
+      const cap = btn.closest(".cap");
+      const head = document.createElement("div"), h = $("h3", cap).cloneNode(true);
+      h.id = "capDialogTitle"; head.className = "capd__head";
+      head.append($(".cap__art", cap).cloneNode(true), h);
+      body.replaceChildren(head, ...$(".cap__full", cap).cloneNode(true).children);
+      dlg.showModal(); body.parentNode.scrollTop = 0;
+    }));
+    $(".capd__x", dlg).addEventListener("click", () => dlg.close());
+    dlg.addEventListener("click", e => { if (e.target === dlg) dlg.close(); });
+  })();
+
   /* ------------------------------------------------------------- contact */
   const C = RIO.contact || {};
   const setC = (k, text, href) => { const a = $(`[data-c="${k}"]`); if (a) { a.textContent = text || "—"; if (href) a.href = href; } };
