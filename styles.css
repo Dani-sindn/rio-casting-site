@@ -156,7 +156,6 @@ p{margin:0}
 .jewel__s--a{stroke-width:4.2}
 .jewel__s--b{stroke-width:2.8;opacity:.9}
 .jewel__s--c{stroke-width:3.4}
-.jewel__glint{fill:#fff;filter:drop-shadow(0 0 6px rgba(255,170,90,.9))}
 
 /* ---------- sections ---------- */
 .section{position:relative;z-index:1;background:var(--paper);padding:clamp(90px,11vw,150px) 0}

@@ -382,6 +382,18 @@
     });
     const curve = (fn, n = 120) => Array.from({ length: n + 1 }, (_, i) => fn(i / n));
     const resample = (pts) => {
+      // straight-sided shapes (few points): share the points out per side so every
+      // corner lands exactly on a vertex and the sides stay perfectly straight
+      if (pts.length < 20) {
+        const segs = pts.slice(1).map((q, i) => Math.hypot(q[0] - pts[i][0], q[1] - pts[i][1]));
+        const tot = segs.reduce((a, b) => a + b, 0), out = [];
+        const n = segs.map(l => Math.max(1, Math.round(l / tot * (N - 1))));
+        while (n.reduce((a, b) => a + b, 0) > N - 1) n[n.indexOf(Math.max(...n))]--;
+        while (n.reduce((a, b) => a + b, 0) < N - 1) n[n.indexOf(Math.max(...n))]++;
+        segs.forEach((_, i) => { for (let k = 0; k < n[i]; k++) { const f = k / n[i]; out.push([pts[i][0] + (pts[i + 1][0] - pts[i][0]) * f, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * f]); } });
+        out.push(pts[pts.length - 1].slice());
+        return out;
+      }
       const L = [0];
       for (let i = 1; i < pts.length; i++) L.push(L[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
       const tot = L[L.length - 1], out = []; let j = 1;
@@ -411,7 +423,7 @@
         c: [[150, 178], [200, 330], [250, 178]] }
     ].map(f => ({ ...f, a: resample(f.a), b: resample(f.b), c: resample(f.c) }));
 
-    const el = { a: $("#ja"), b: $("#jb"), c: $("#jc") }, glint = $("#jglint");
+    const el = { a: $("#ja"), b: $("#jb"), c: $("#jc") };
     const stops = [$("#jg0"), $("#jg1"), $("#jg2")];
     const fig = $("#jfig"), metal = $("#jmetal"), list = $("#forms");   // optional labels
     if (list) list.innerHTML = FORMS.map(f => `<li>${f.name}</li>`).join("");
@@ -440,19 +452,12 @@
       const k = smooth(.785, 1, s - Math.floor(s)), A = FORMS[i], B = FORMS[j];
       for (const key of ["a", "b", "c"]) {
         const pa = A[key], pb = B[key], P = [];
-        for (let n = 0; n < N; n++) {
-          // the shimmer runs a whole number of waves along the line, so a closed
-          // shape's first and last points move together and the loop never breaks
-          const w = STILL ? 0 : Math.sin(t * 1.2 + n / (N - 1) * TAU * 2) * .9;
-          P.push([pa[n][0] + (pb[n][0] - pa[n][0]) * k, pa[n][1] + (pb[n][1] - pa[n][1]) * k + w]);
-        }
+        // pure interpolation, no shimmer: each form holds its exact geometry
+        for (let n = 0; n < N; n++) P.push([pa[n][0] + (pb[n][0] - pa[n][0]) * k, pa[n][1] + (pb[n][1] - pa[n][1]) * k]);
         const closed = Math.hypot(P[0][0] - P[N - 1][0], P[0][1] - P[N - 1][1]) < .5;
         if (closed) P.pop();
         el[key].setAttribute("d", P.map((q, n) => (n ? "L" : "M") + q[0].toFixed(1) + " " + q[1].toFixed(1)).join("") + (closed ? "Z" : ""));
       }
-      const gi = Math.floor(((t * .12) % 1) * N), ga = A.a[gi], gb = B.a[gi];
-      glint.setAttribute("cx", (ga[0] + (gb[0] - ga[0]) * k).toFixed(1));
-      glint.setAttribute("cy", (ga[1] + (gb[1] - ga[1]) * k).toFixed(1));
       stops.forEach((st, j) => st.setAttribute("stop-color", mixHex(A.col[j], B.col[j], k)));
       const cur = k < .5 ? i : j;
       if (cur !== shown) {
