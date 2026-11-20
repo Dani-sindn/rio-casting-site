@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400..700&family=Geist:wght@400..600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <link rel="preload" as="image" href="assets/video/hero-poster.jpg?v=2" />
-<link rel="stylesheet" href="styles.css?v=57" />
+<link rel="stylesheet" href="styles.css?v=59" />
 <script>document.documentElement.classList.add("js")</script>
 </head>
 <body>
@@ -21,7 +21,7 @@
     <path d="M4.7 78.07 L70.7 191.47 L70.7 505 L4.7 505 Z" fill="currentColor"/>
     <path d="M108.7 247.66 L173.7 359.34 L173.7 505 L108.7 505 Z" fill="currentColor"/>
     <path d="M120.56 0 L314.7 0.2 C388.7 0.2 466.7 43 466.7 151 C466.7 291 392.08 284.62 373.7 303 L484.8 505 L405.97 505 L259.6 253.5 L299.7 253.5 C361.7 253.5 405.7 221 405.7 151 C405.7 77 345.7 57.6 307.7 57.6 L182.7 57.6 L182.7 106.77 Z" fill="currentColor"/>
-    <path d="M-0.04 0 L81.96 0 L375.87 505 L293.87 505 Z" style="fill:var(--logo-bar,#04448A)"/>
+    <path d="M-0.04 0 L81.96 0 L375.87 505 L293.87 505 Z" style="fill:var(--logo-bar,#FF6B0F)"/>
   </symbol>
   <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-cast" viewBox="0 0 64 64"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-38 42 17)"><path d="M31 9h22v5a11 11 0 0 1-22 0z"/><path d="M53 11.5h9"/></g><path d="M9 41h46v15H9z"/><path d="M9 48.5h46"/><path d="M22.5 41l2.5-5h7l2.5 5"/></g><path d="M28.6 19c-1.3 5.5 1.2 10-.1 16" fill="none" stroke-width="3.6" stroke-linecap="round" style="stroke:var(--ic-accent,#FF6B0F)"/></symbol>
@@ -44,7 +44,6 @@
     <nav class="nav__links" aria-label="Primary">
       <a href="#capabilities">Capabilities</a>
       <a href="#metals">Metals</a>
-      <a href="#process">Process</a>
       <a href="#market">Metal Prices</a>
       <a href="#contact">Contact</a>
     </nav>
@@ -58,7 +57,7 @@
 </header>
 <div class="menu" id="menu" hidden>
   <nav aria-label="Mobile">
-    <a href="#capabilities">Capabilities</a><a href="#metals">Metals</a><a href="#process">Process</a><a href="#market">Metal Prices</a><a href="#start">Start a project</a><a href="#contact">Contact</a>
+    <a href="#capabilities">Capabilities</a><a href="#metals">Metals</a><a href="#market">Metal Prices</a><a href="#start">Start a project</a><a href="#contact">Contact</a>
   </nav>
 </div>
 
@@ -210,22 +209,6 @@
   </div>
 </section>
 
-<!-- ============ PROCESS ============ -->
-<section class="section" id="process">
-  <div class="wrap">
-    <div class="head">
-      <p class="eyebrow"><span class="bar"></span>How it works</p>
-      <h2>From idea to metal <em>in four moves.</em></h2>
-    </div>
-    <ol class="steps" id="steps">
-      <li class="step reveal"><span class="step__n">01</span><h3>Send your idea</h3><p>A sketch, a photo, a 3D file or a physical model. Tell us the metal, karat and quantity.</p></li>
-      <li class="step reveal"><span class="step__n">02</span><h3>Model &amp; print</h3><p>We build or refine the CAD and print it in castable wax or resin. You approve before anything is poured.</p></li>
-      <li class="step reveal"><span class="step__n">03</span><h3>Cast</h3><p>Your piece is cast in the metal you chose, with the precision three decades of daily pours have taught us.</p></li>
-      <li class="step reveal"><span class="step__n">04</span><h3>Finish &amp; ship</h3><p>Cleaned, finished to spec, and on its way — across Manhattan or across the world.</p></li>
-    </ol>
-  </div>
-</section>
-
 <!-- ============ MARKET ============ -->
 <section class="section section--ink market" id="market">
   <div class="wrap">
@@ -285,32 +268,18 @@
   </div>
 </section>
 
-<!-- ============ WORLDWIDE ============ -->
-<section class="world">
-  <canvas class="world__globe" id="globe" aria-hidden="true"></canvas>
-  <div class="wrap world__in">
-    <p class="eyebrow eyebrow--light"><span class="bar"></span>Worldwide</p>
-    <h2>From West 45th Street <em>to the world.</em></h2>
-    <p>Send files from anywhere. Jewelers, designers and brands across the United States and abroad trust our New York bench with their castings — and receive them shipped to their door.</p>
-    <div class="world__row">
-      <div><b>Files in</b><span>Email or upload STL, 3DM, OBJ — or mail a model.</span></div>
-      <div><b>Metal out</b><span>Finished castings shipped locally or internationally.</span></div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ START ============ -->
+<!-- ============ WORLDWIDE + START ============ -->
 <section class="closing" id="start">
+  <canvas class="closing__globe" id="globe" aria-hidden="true"></canvas>
   <div class="wrap start">
     <div class="start__copy">
-      <p class="eyebrow eyebrow--light"><span class="bar"></span>Start a project</p>
-      <h2>Tell us what you're <em>imagining.</em></h2>
-      <p>Share the basics and our team in New York will reply with next steps and a quote. Have files? Mention them — we'll send you a link to upload.</p>
-      <ul class="start__list">
-        <li>Casting only, CAD only, or both</li>
-        <li>Single piece or production run</li>
-        <li>Any metal, any karat</li>
-      </ul>
+      <p class="eyebrow eyebrow--light"><span class="bar"></span>Worldwide · Start a project</p>
+      <h2>From West 45th Street <em>to the world.</em></h2>
+      <p>Send files from anywhere. Jewelers, designers and brands across the United States and abroad trust our New York bench with their castings — and receive them shipped to their door.</p>
+      <div class="closing__row">
+        <div><b>Files in</b><span>Email or upload STL, 3DM, OBJ — or mail a model.</span></div>
+        <div><b>Metal out</b><span>Finished castings shipped locally or internationally.</span></div>
+      </div>
       <div class="visit" id="contact">
         <p class="visit__title">Visit the house</p>
         <p class="visit__lead">In the heart of New York's Diamond District. Review your project in person, drop off a model or pick up your castings — by appointment.</p>
@@ -322,6 +291,10 @@
       </div>
     </div>
     <form class="form" id="form" novalidate>
+      <div class="form__head">
+        <h3>Start a project</h3>
+        <p>Leave your details and our team in New York will get back to you.</p>
+      </div>
       <div class="form__row">
         <label>Full name<input name="name" autocomplete="name" required /></label>
         <label><span>Company <span class="opt">(optional)</span></span><input name="company" autocomplete="organization" /></label>
@@ -330,22 +303,7 @@
         <label>Email<input name="email" type="email" autocomplete="email" required /></label>
         <label><span>Phone <span class="opt">(optional)</span></span><input name="phone" type="tel" autocomplete="tel" /></label>
       </div>
-      <fieldset class="pills">
-        <legend>I need</legend>
-        <label><input type="radio" name="service" value="Casting" checked /><span>Casting</span></label>
-        <label><input type="radio" name="service" value="CAD design" /><span>CAD design</span></label>
-        <label><input type="radio" name="service" value="CAD + casting" /><span>CAD + casting</span></label>
-        <label><input type="radio" name="service" value="3D printing" /><span>3D printing</span></label>
-      </fieldset>
-      <div class="form__row">
-        <label>Metal
-          <select name="metal">
-            <option>Not sure yet</option><option>Yellow gold</option><option>White gold</option><option>Rose gold</option><option>Platinum</option><option>Palladium</option><option>Sterling silver</option><option>Brass</option><option>Bronze</option><option>Other</option>
-          </select>
-        </label>
-        <label>Quantity<input name="quantity" inputmode="numeric" placeholder="e.g. 1, 25, 200" /></label>
-      </div>
-      <label>Tell us about the piece<textarea name="message" rows="4" required placeholder="Size, karat, deadline, anything you have in mind…"></textarea></label>
+      <label><span>Message <span class="opt">(optional)</span></span><textarea name="message" rows="3" placeholder="How can we help?"></textarea></label>
       <button class="btn btn--molten btn--block" type="submit">Send request <svg><use href="#i-arrow"/></svg></button>
       <p class="form__msg" id="formMsg" role="status" aria-live="polite"></p>
     </form>
@@ -366,13 +324,13 @@
       <p><b>RÍO CASTING INC.</b><span>Creation without limits</span></p>
     </div>
     <nav aria-label="Footer">
-      <a href="#capabilities">Capabilities</a><a href="#metals">Metals</a><a href="#process">Process</a><a href="#market">Metal prices</a><a href="#start">Start a project</a><a href="#contact">Contact</a>
+      <a href="#capabilities">Capabilities</a><a href="#metals">Metals</a><a href="#market">Metal prices</a><a href="#start">Start a project</a><a href="#contact">Contact</a>
     </nav>
     <p class="footer__legal">© <span id="year">2026</span> Río Casting Inc. · New York, NY</p>
   </div>
 </footer>
 
 <script src="config.js?v=46" defer></script>
-<script src="main.js?v=54" defer></script>
+<script src="main.js?v=58" defer></script>
 </body>
 </html>

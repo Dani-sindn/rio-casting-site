@@ -6,7 +6,7 @@ Landing en inglés para Rio Casting (casting de metales en Nueva York para clien
 
 ## Marca
 
-- Logo recreado en vector desde el arte oficial (coincide ~98,5 % con la referencia): `assets/rio-logo.svg` (versión para fondo claro) y `assets/rio-logo-white.svg` (para fondo oscuro), con el nombre "RÍO CASTING INC." y "CREATION WITHOUT LIMITS"; el símbolo solo está en `assets/rio-mark.svg` / `assets/rio-mark-white.svg`. El azul de la barra es `#04448A` (en fondos oscuros se usa el tono más claro `#3D74D1`).
+- Logo recreado en vector desde el arte oficial (coincide ~98,5 % con la referencia): `assets/rio-logo.svg` (versión para fondo claro) y `assets/rio-logo-white.svg` (para fondo oscuro), con el nombre "RÍO CASTING INC." y "CREATION WITHOUT LIMITS"; el símbolo solo está en `assets/rio-mark.svg` / `assets/rio-mark-white.svg`. La barra del logo va en el naranja de la marca, `#FF6B0F`, en todas las versiones.
 - Los textos del logo usan **Jost**, la alternativa abierta más cercana a la letra del logo (estilo Futura). Si el cliente tiene la fuente original o el logo en curvas, conviene reemplazar esos textos.
 - Tipografía del sitio: **Jost** para titulares, etiquetas y marca; Geist para textos; Geist Mono para datos y precios.
 
@@ -33,10 +33,8 @@ Todo está en `config.js`: dirección, teléfono, email y el feed de precios.
 4. Our Advantage (antes "Capabilities"): 4 cards con íconos propios y hover (Metal Casting, CAD Design + 3D Printing, Laser Scanning & Engraving, Finishing). Cada card muestra un extracto y un enlace "See more" que abre la card completa (subtítulo, textos y "Our Capabilities") en un modal (`<dialog>`, se cierra con la X, Esc o tocando fuera).
 5. Material library ("We can cast any precious & non-precious metal."): cuadrícula de 13 metales (Gold, Platinum, Sterling Silver, Palladium, Brass, Bronze, White Metal, Aluminum, Steel, Copper, Cobalt, Thai Gold, Gunmetal) más una celda "Another alloy? Ask us". Al elegir uno se muestra su ficha debajo (descripción, datos y precio spot si aplica). Los datos de cada metal están en `METALS` dentro de `main.js`.
 6. Metal desk: precios en vivo (oz / g / dwt / kg), oro por kilate y estimador de metal (cera → metal → valor).
-7. Proceso en 4 pasos.
-8. Worldwide: globo animado con rutas desde NYC.
-10. Formulario "Start a project".
-11. Contacto y footer.
+7. Cierre (Worldwide · Start a project): una sola sección con el globo animado de rutas desde NYC detrás, el texto de Worldwide, los datos de contacto y un formulario solo de contacto (nombre, empresa, email, teléfono y mensaje opcional). La sección "How it works" se eliminó.
+8. Footer.
 
 No incluye fotos de joyas, por decisión de producto. El hero usa el video propio del cliente; el resto de las imágenes son generativas (CSS, SVG y canvas), sin fotos de stock.
 

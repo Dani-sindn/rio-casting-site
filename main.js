@@ -490,14 +490,16 @@
       const n = FORMS.length, s = t / 4.2, i = Math.floor(s) % n, j = (i + 1) % n;
       const k = smooth(.785, 1, s - Math.floor(s)), A = FORMS[i], B = FORMS[j];
       for (const key of ["a", "b", "c"]) {
-        let d = "";
-        const pa = A[key], pb = B[key];
+        const pa = A[key], pb = B[key], P = [];
         for (let n = 0; n < N; n++) {
-          const w = STILL ? 0 : Math.sin(t * 1.2 + n * .09) * .9;
-          const x = pa[n][0] + (pb[n][0] - pa[n][0]) * k, y = pa[n][1] + (pb[n][1] - pa[n][1]) * k + w;
-          d += (n ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1);
+          // the shimmer runs a whole number of waves along the line, so a closed
+          // shape's first and last points move together and the loop never breaks
+          const w = STILL ? 0 : Math.sin(t * 1.2 + n / (N - 1) * TAU * 2) * .9;
+          P.push([pa[n][0] + (pb[n][0] - pa[n][0]) * k, pa[n][1] + (pb[n][1] - pa[n][1]) * k + w]);
         }
-        el[key].setAttribute("d", d);
+        const closed = Math.hypot(P[0][0] - P[N - 1][0], P[0][1] - P[N - 1][1]) < .5;
+        if (closed) P.pop();
+        el[key].setAttribute("d", P.map((q, n) => (n ? "L" : "M") + q[0].toFixed(1) + " " + q[1].toFixed(1)).join("") + (closed ? "Z" : ""));
       }
       const gi = Math.floor(((t * .12) % 1) * N), ga = A.a[gi], gb = B.a[gi];
       glint.setAttribute("cx", (ga[0] + (gb[0] - ga[0]) * k).toFixed(1));
@@ -533,20 +535,11 @@
     update(); render(performance.now());
   })();
 
-  /* ------------------------------------------------- reveal + process line */
+  /* ----------------------------------------------------------------- reveal */
   const io = new IntersectionObserver(es => es.forEach(e => {
     if (e.isIntersecting) { e.target.classList.add("is-seen"); io.unobserve(e.target); }
   }), { threshold: .15 });
   $$(".reveal").forEach(el => io.observe(el));
-
-  const steps = $("#steps"), stepEls = $$(".step", steps);
-  const onStep = () => {
-    const r = steps.getBoundingClientRect(), vh = innerHeight;
-    const p = Math.min(1, Math.max(0, (vh * .8 - r.top) / (vh * .55)));
-    steps.style.setProperty("--p", p);
-    stepEls.forEach((s, i) => s.classList.toggle("is-lit", p >= i / stepEls.length + .02));
-  };
-  onScrollFrame(onStep);
 
   /* ------------------------------------------------- capability details */
   // "See more" opens the whole card (intro, details, capabilities) in a modal dialog.
