@@ -24,7 +24,7 @@ Todo está en `config.js`: dirección, teléfono, email y el feed de precios.
 
 - **Formulario:** por ahora no envía nada; al pulsar "Send request" muestra una nota con el teléfono y el email. El envío real queda para la siguiente entrega.
 - **Precios en vivo (Kitco):** el Metal desk muestra las gráficas oficiales de 24 h de Kitco (oro, plata, platino, paladio), que Kitco ofrece gratis como imágenes en kitconet.com/price con la condición de enlazar a `www.kitco.com/connecting.html`. Kitco no ofrece los números como datos (no hay API pública); para eso haría falta una licencia de datos con Kitco. El sitio recarga las imágenes cada minuto.
-- **Valores de referencia:** la tabla por kilate, el estimador, el precio del menú y los precios de la biblioteca se calculan con `api.gold-api.com` (gratis, sin key, sin SLA), cada 60 s, y están rotulados como referencia. Si falla, se usan los últimos precios guardados en el navegador.
+- **Valores de referencia:** la tabla por kilate, el estimador y los precios de la biblioteca se calculan con `api.gold-api.com` (gratis, sin key, sin SLA), cada 60 s, y están rotulados como referencia. Si falla, se usan los últimos precios guardados en el navegador.
 
 ## Secciones
 
@@ -40,6 +40,8 @@ Todo está en `config.js`: dirección, teléfono, email y el feed de precios.
 No incluye fotos de joyas, por decisión de producto. El hero usa el video propio del cliente; el resto de las imágenes son generativas (CSS, SVG y canvas), sin fotos de stock.
 
 ## Portal de clientes (prototipo)
+
+El botón "Client login" del header (y del menú móvil) lleva a `portal/`; reemplaza el precio del oro que había antes en el header.
 
 `portal/` es un prototipo navegable con datos de ejemplo (no indexado, no envía ni guarda nada): inicio de sesión con código de un solo uso, resumen con el nombre del cliente, pedidos con línea de tiempo por etapas, cotizaciones y cuenta. Los datos de ejemplo están al principio de `portal/portal.js`. La versión real usará Supabase (acceso por código enviado por email, solo por invitación, y reglas por cliente en la base de datos).
 

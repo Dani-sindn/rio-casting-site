@@ -25,7 +25,7 @@
 
   /* ------------------------------------------------------------------ data */
   const G_PER_OZ = 31.1034768, G_PER_DWT = 1.55517384;
-  const SYMS = ["XAU", "XAG", "XPT", "XPD"]; // reference feed (karat table, estimator, ticker, library)
+  const SYMS = ["XAU", "XAG", "XPT", "XPD"]; // reference feed (karat table, estimator, library)
   const KARATS = [["24K", .999], ["22K", .9167], ["18K", .750], ["14K", .585], ["10K", .417]];
 
   // Wax-to-metal multipliers assume a casting wax with specific gravity ≈ 1.0.
@@ -206,10 +206,9 @@
   setInterval(() => { if (!document.hidden) reloadKitco(); }, 60000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) reloadKitco(); });
 
-  // Reference spot feed: drives the karat table, the estimator, the header ticker and the library.
+  // Reference spot feed: drives the karat table, the estimator and the library.
   function renderPrices() {
     const g = prices.XAU;
-    $("[data-nav-gold]").textContent = g ? usd(g, 0) : "—";
     $("#ktable tbody").innerHTML = KARATS.map(([k, f]) =>
       `<tr><td>${k}</td><td>${(f * 1000).toFixed(1).replace(/\.0$/, "")}</td><td>${g ? usd(g / G_PER_OZ * f) : "—"}</td><td>${g ? usd(g / G_PER_OZ * G_PER_DWT * f) : "—"}</td></tr>`).join("");
     renderLibPrice(); calc();

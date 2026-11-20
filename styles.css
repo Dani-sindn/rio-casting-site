@@ -86,9 +86,9 @@ p{margin:0}
 .nav__links a{opacity:.75;transition:opacity .2s}
 .nav__links a:hover{opacity:1}
 .nav__right{display:flex;align-items:center;gap:14px}
-.nav__tick{display:flex;align-items:center;gap:8px;font:500 12.5px/1 var(--mono);padding:9px 14px;border:1px solid var(--line-l);border-radius:10px;background:rgba(255,255,255,.04)}
-.nav__tick span{opacity:.6}
-.nav__tick em{font-style:normal;opacity:.5}
+.nav__login{display:flex;align-items:center;gap:9px;height:40px;padding:0 16px;border:1px solid var(--line-l);border-radius:10px;background:rgba(255,255,255,.04);font-size:14px;font-weight:500;white-space:nowrap;transition:background .2s,border-color .2s}
+.nav__login svg{width:18px;height:18px;color:var(--molten-hi)}
+.nav__login:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3)}
 .burger{display:none;width:44px;height:44px;border-radius:10px;border:1px solid var(--line-l);background:rgba(255,255,255,.05);cursor:pointer;position:relative}
 .burger span{position:absolute;left:14px;right:14px;height:1.5px;background:#fff;transition:transform .3s var(--ease),top .3s var(--ease)}
 .burger span:first-child{top:17px}.burger span:last-child{top:25px}
@@ -368,7 +368,7 @@ html:has(.capd[open]){overflow:hidden}
   .kitco{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (max-width:860px){
-  .nav__tick{display:none}
+  .nav__right{gap:10px}
   .head--split{grid-template-columns:1fr;gap:20px}
   .market__meta{justify-self:start;text-align:left}
   .status{justify-content:flex-start}
@@ -401,6 +401,8 @@ html:has(.capd[open]){overflow:hidden}
 }
 @media (max-width:560px){
   .btn--sm{display:none}
+  .nav__login{width:44px;height:44px;padding:0;justify-content:center}
+  .nav__login span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .hero__in{padding-top:min(50svh,400px)}
   .hero__title{font-size:clamp(36px,10.6vw,50px)}
   .hero__sub{font-size:17px;max-width:none}
