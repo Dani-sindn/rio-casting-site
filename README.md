@@ -28,7 +28,7 @@ Todo está en `config.js`: dirección, teléfono, email y el feed de precios.
 
 ## Secciones
 
-1. Hero: video del vertido de metal sobre el molde del logo (`assets/video/`), a la derecha del texto en escritorio y arriba en móvil. Sus bordes se funden con el fondo para no quedar bajo el texto, y se desvanece en el último segundo antes de reiniciarse, así el loop no corta. Es el segundo video del cliente ("Rio casting video hero 2", 8,6 s): se recortaron las franjas negras laterales y se muestra entero, del tamaño que cabe a la derecha del texto, para que la R completa quede siempre a la vista (en móvil, arriba del texto). Se sirve en 1600 px (1,9 MB) o 960 px en móvil (0,6 MB), sin audio y con imagen de póster mientras carga. El hero queda fijo y el resto de la página sube encima como una cortina.
+1. Hero: video del vertido de metal ("RIO CASTING header - HD 1080p") a la derecha del texto en escritorio y arriba en móvil. Se recortaron las franjas negras laterales y la franja inferior con el texto "SCENE 6" que venía en el video; los últimos 0,8 s se funden con los primeros para que repita sin corte ni fundido a negro (loop de 3,6 s). Sus bordes se funden con el fondo. Se sirve en 1600 px (0,7 MB) o 960 px en móvil (0,24 MB), sin audio y con imagen de póster mientras carga. El hero queda fijo y el resto de la página sube encima como una cortina.
 2. The Rio Standard (antes "Our principle"): texto grande y de peso que se revela palabra por palabra con el scroll; al lado, la joya en línea SVG cambia de forma y de metal en un loop propio (sin etiquetas).
 3. (Se eliminaron la franja de datos y la marquesina; esa info se repite más abajo.)
 4. Our Advantage (antes "Capabilities"): 4 cards con íconos propios y hover (Metal Casting, CAD Design + 3D Printing, Laser Scanning & Engraving, Finishing). Cada card muestra un extracto y un enlace "See more" que abre la card completa (subtítulo, textos y "Our Capabilities") en un modal (`<dialog>`, se cierra con la X, Esc o tocando fuera).
@@ -47,14 +47,13 @@ El botón "Client login" del header (y del menú móvil) lleva a `portal/`; reem
 
 ## Por confirmar con el cliente
 
-- Teléfono: el mockup dice "212-7640-7674"; se usó 212-764-7674.
 - Si el oro 100% reciclado y el white metal siguen vigentes.
 - Fichas de metales nuevos (Aluminum, Steel, Copper, Cobalt, Thai Gold, Gunmetal): textos y datos de referencia redactados para la web; conviene que el cliente los revise. "Thai Gold" se interpretó como oro tailandés 23K (96,5 %).
 - Las fotos reales del taller y del equipo, si se quieren agregar más adelante.
 
 ## Rendimiento
 
-- **Hero (video):** H.264 sin audio, comprimido para web (1,9 MB escritorio / 0,6 MB móvil). Se pausa cuando el hero queda tapado o la pestaña está oculta. Con "reducir movimiento" o ahorro de datos se muestra solo el póster. El hero 3D anterior (WebGL) queda en el historial de git y en `v2/`.
+- **Hero (video):** H.264 sin audio, comprimido para web (0,7 MB escritorio / 0,24 MB móvil). Se pausa cuando el hero queda tapado o la pestaña está oculta. Con "reducir movimiento" o ahorro de datos se muestra solo el póster. El hero 3D anterior (WebGL) queda en el historial de git y en `v2/`.
 - **Globo y joya SVG:** 30 fps. La geometría se calcula una sola vez y solo se animan mientras están en pantalla.
 - **Gama baja / ahorro de datos / "reducir movimiento":** las animaciones se muestran como imagen fija.
 - **Scroll:** un único listener agrupado por frame. Se quitaron las animaciones CSS infinitas que repintaban y los `backdrop-filter` sobre el canvas.

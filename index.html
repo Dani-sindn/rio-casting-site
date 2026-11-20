@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400..700&family=Geist:wght@400..600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
-<link rel="preload" as="image" href="assets/video/hero-poster.jpg?v=2" />
-<link rel="stylesheet" href="styles.css?v=66" />
+<link rel="preload" as="image" href="assets/video/hero-poster.jpg?v=3" />
+<link rel="stylesheet" href="styles.css?v=68" />
 <script>document.documentElement.classList.add("js")</script>
 </head>
 <body>
@@ -31,6 +31,8 @@
   <symbol id="i-finish" viewBox="0 0 64 64"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(45 40 22)"><rect x="34" y="4" width="12" height="26" rx="5"/><path d="M37 11h6M37 15.5h6"/><path d="M40 30v8"/><circle cx="40" cy="43.5" r="5.5"/></g><ellipse cx="19" cy="54" rx="12" ry="4.5"/></g><path d="M37 41l1.7 4.3 4.3 1.7-4.3 1.7-1.7 4.3-1.7-4.3-4.3-1.7 4.3-1.7z" style="fill:var(--ic-accent,#FF6B0F)"/></symbol>
   <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="9.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
   <symbol id="i-phone" viewBox="0 0 24 24"><path d="M6.6 3.5h3l1.5 4.2-2 1.3a11 11 0 0 0 5.9 5.9l1.3-2 4.2 1.5v3a2 2 0 0 1-2.2 2A17 17 0 0 1 4.5 5.7a2 2 0 0 1 2.1-2.2z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+  <symbol id="i-cell" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 18.5h3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+  <symbol id="i-fax" viewBox="0 0 24 24"><path d="M7 9V3.5h8l2 2V9M7 17.5H4.5V9h15v8.5H17M7 14h10v6.5H7z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
   <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 7l8.5 6 8.5-6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
 </svg>
 
@@ -66,8 +68,8 @@
 <section class="hero" id="top">
   <div class="hero__stage" aria-hidden="true">
     <div class="hero__video">
-      <video id="heroVideo" muted playsinline preload="auto" poster="assets/video/hero-poster.jpg?v=2"
-        data-src-lg="assets/video/hero-1600.mp4?v=2" data-src-sm="assets/video/hero-960.mp4?v=2"></video>
+      <video id="heroVideo" muted playsinline preload="auto" poster="assets/video/hero-poster.jpg?v=3"
+        data-src-lg="assets/video/hero-1600.mp4?v=3" data-src-sm="assets/video/hero-960.mp4?v=3"></video>
     </div>
   </div>
   <div class="wrap hero__in">
@@ -296,9 +298,11 @@
         <p class="visit__title">Visit the house</p>
         <p class="visit__lead">In the heart of New York's Diamond District. Review your project in person, drop off a model or pick up your castings — by appointment.</p>
         <ul class="visit__list">
-          <li><svg><use href="#i-pin"/></svg><a data-c="address" target="_blank" rel="noopener"></a></li>
-          <li><svg><use href="#i-phone"/></svg><a data-c="phone"></a></li>
-          <li><svg><use href="#i-mail"/></svg><a data-c="email"></a></li>
+          <li><svg><use href="#i-pin"/></svg><span><small>Address</small><a data-c="address" target="_blank" rel="noopener"></a></span></li>
+          <li><svg><use href="#i-phone"/></svg><span><small>Phone</small><a data-c="phone"></a></span></li>
+          <li><svg><use href="#i-cell"/></svg><span><small>Cell</small><a data-c="cell"></a></span></li>
+          <li><svg><use href="#i-fax"/></svg><span><small>Fax</small><b data-c="fax"></b></span></li>
+          <li><svg><use href="#i-mail"/></svg><span><small>Email</small><a data-c="email"></a></span></li>
         </ul>
       </div>
     </div>
@@ -338,11 +342,11 @@
     <nav aria-label="Footer">
       <a href="#capabilities">Capabilities</a><a href="#metals">Metals</a><a href="#market">Metal prices</a><a href="#start">Start a project</a><a href="#contact">Contact</a>
     </nav>
-    <p class="footer__legal">© <span id="year">2026</span> Río Casting Inc. · New York, NY</p>
+    <p class="footer__legal">© <span id="year">2026</span> Río Casting Inc. · 56 West 45th Street, 11th Floor, New York, NY 10036 · (212) 764-7674</p>
   </div>
 </footer>
 
-<script src="config.js?v=46" defer></script>
-<script src="main.js?v=66" defer></script>
+<script src="config.js?v=67" defer></script>
+<script src="main.js?v=67" defer></script>
 </body>
 </html>

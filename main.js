@@ -125,23 +125,17 @@
 
   /* ------------------------------------------------- hero: the casting film */
   // The film sits where the action is (right of the copy on desktop, above it on
-  // phones). It is masked into the dark page so it never sits under the text, and
-  // instead of a hard cut it fades out just before the end, restarts and fades in.
+  // phones) and is masked into the dark page so it never sits under the text.
+  // Its last moments are cross-faded into its first in the file itself, so it
+  // loops natively with no cut and no fade to black.
   (() => {
     const wrap = $(".hero__video"), v = $("#heroVideo"), copy = $(".hero__in");
     if (!wrap || !v) return;
     const narrow = () => innerWidth <= 860;
-    const FADE = .9;                                   // seconds of fade at each end of the loop
     if (LOW || reduce) { wrap.classList.add("is-still", "is-on"); return; }   // poster only
+    v.loop = true;
     v.src = narrow() ? v.dataset.srcSm : v.dataset.srcLg;
-    // the film keeps a fixed place (CSS): it is the protagonist, the copy works around it
-    let fading = false, raf = 0;
-    const watch = () => {
-      if (!fading && v.duration && v.currentTime > v.duration - FADE) { fading = true; wrap.classList.remove("is-on"); }
-      raf = v.paused ? 0 : requestAnimationFrame(watch);
-    };
-    v.addEventListener("playing", () => { wrap.classList.add("is-on"); if (!raf) raf = requestAnimationFrame(watch); });
-    v.addEventListener("ended", () => { fading = false; v.currentTime = 0; v.play().catch(() => {}); });
+    v.addEventListener("playing", () => wrap.classList.add("is-on"), { once: true });
     // only play while the hero can be seen
     const onTop = () => scrollY < innerHeight * 1.02 || narrow() && scrollY < copy.getBoundingClientRect().bottom + scrollY;
     const sync = () => { if (document.hidden || !onTop()) { if (!v.paused) v.pause(); } else if (v.paused) v.play().catch(() => {}); };
@@ -516,7 +510,9 @@
   const C = RIO.contact || {};
   const setC = (k, text, href) => { const a = $(`[data-c="${k}"]`); if (a) { a.textContent = text || "—"; if (href) a.href = href; } };
   setC("address", C.address, C.address && "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(C.address));
-  setC("phone", C.phone, C.phone && "tel:" + C.phone.replace(/[^\d+]/g, ""));
+  setC("phone", C.phone, C.phone && "tel:+1" + C.phone.replace(/\D/g, ""));
+  setC("cell", C.cell, C.cell && "tel:+1" + C.cell.replace(/\D/g, ""));
+  setC("fax", C.fax);
   setC("email", C.email, C.email && "mailto:" + C.email);
 
   /* ---------------------------------------------------------------- form */

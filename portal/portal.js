@@ -27,7 +27,7 @@
   ];
 
   const CLIENT = { first: "María", last: "Torres", company: "Torres Fine Jewelry", email: "maria@torresfinejewelry.com", phone: "+1 (646) 555-0142", since: 2024 };
-  const CONTACT = { name: "Roberto", phone: "+1 212-764-7674", email: "roberto@riocasting.com" };
+  const CONTACT = { name: "Roberto", phone: "(212) 764-7674", email: "print@riocastinginc.com" };
 
   const ORDERS = [
     { code: "RC-2026-0142", piece: "Signet ring — custom crest", metal: "18K Yellow Gold", qty: 1, stage: 4,
@@ -93,7 +93,7 @@
       <h3>Your contact at Río</h3>
       <p>Questions about an order? Mention its code and we'll pick it up from there.</p>
       <div class="contact">
-        <a href="tel:${CONTACT.phone.replace(/[^\d+]/g, "")}"><svg aria-hidden="true"><use href="#i-phone"/></svg>${CONTACT.phone}</a>
+        <a href="tel:+1${CONTACT.phone.replace(/\D/g, "")}"><svg aria-hidden="true"><use href="#i-phone"/></svg>${CONTACT.phone}</a>
         <a href="mailto:${CONTACT.email}"><svg aria-hidden="true"><use href="#i-mail"/></svg>${CONTACT.email}</a>
       </div>
     </div>`;
