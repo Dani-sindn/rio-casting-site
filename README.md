@@ -39,6 +39,10 @@ Todo está en `config.js`: dirección, teléfono, email y el feed de precios.
 
 No incluye fotos de joyas, por decisión de producto. El hero usa el video propio del cliente; el resto de las imágenes son generativas (CSS, SVG y canvas), sin fotos de stock.
 
+## Portal de clientes (prototipo)
+
+`portal/` es un prototipo navegable con datos de ejemplo (no indexado, no envía ni guarda nada): inicio de sesión con código de un solo uso, resumen con el nombre del cliente, pedidos con línea de tiempo por etapas, cotizaciones y cuenta. Los datos de ejemplo están al principio de `portal/portal.js`. La versión real usará Supabase (acceso por código enviado por email, solo por invitación, y reglas por cliente en la base de datos).
+
 ## Por confirmar con el cliente
 
 - Teléfono: el mockup dice "212-7640-7674"; se usó 212-764-7674.
