@@ -28,7 +28,7 @@ Todo está en `config.js`: dirección, teléfono, email y el feed de precios.
 
 ## Secciones
 
-1. Hero: video del vertido de metal ("RIO CASTING header - HD 1080p") a la derecha del texto en escritorio y arriba en móvil. Se recortaron las franjas negras laterales y la franja inferior con el texto "SCENE 6" que venía en el video; los últimos 0,8 s se funden con los primeros para que repita sin corte ni fundido a negro (loop de 3,6 s). Sus bordes se funden con el fondo. Se sirve en 1600 px (0,7 MB) o 960 px en móvil (0,24 MB), sin audio y con imagen de póster mientras carga. El hero queda fijo y el resto de la página sube encima como una cortina.
+1. Hero: video del vertido sobre el molde de la R ("Rio casting header 3", 8 s: molde vacío → vertido → R llena), a la derecha del texto en escritorio y arriba en móvil, siempre con la R completa a la vista. Se recortaron las franjas negras laterales; sus bordes se funden con el fondo y, como cuenta una historia, se desvanece en el último segundo antes de volver a empezar. Se sirve en 1600 px (1,5 MB) o 960 px en móvil (0,5 MB), sin audio y con imagen de póster (la R llena) mientras carga. El hero queda fijo y el resto de la página sube encima como una cortina.
 2. The Rio Standard (antes "Our principle"): texto grande y de peso que se revela palabra por palabra con el scroll; al lado, la joya en línea SVG cambia de forma y de metal en un loop propio (sin etiquetas).
 3. (Se eliminaron la franja de datos y la marquesina; esa info se repite más abajo.)
 4. Our Advantage (antes "Capabilities"): 4 cards con íconos propios y hover (Metal Casting, CAD Design + 3D Printing, Laser Scanning & Engraving, Finishing). Cada card muestra un extracto y un enlace "See more" que abre la card completa (subtítulo, textos y "Our Capabilities") en un modal (`<dialog>`, se cierra con la X, Esc o tocando fuera).
@@ -53,7 +53,7 @@ El botón "Client login" del header (y del menú móvil) lleva a `portal/`; reem
 
 ## Rendimiento
 
-- **Hero (video):** H.264 sin audio, comprimido para web (0,7 MB escritorio / 0,24 MB móvil). Se pausa cuando el hero queda tapado o la pestaña está oculta. Con "reducir movimiento" o ahorro de datos se muestra solo el póster. El hero 3D anterior (WebGL) queda en el historial de git y en `v2/`.
+- **Hero (video):** H.264 sin audio, comprimido para web (1,5 MB escritorio / 0,5 MB móvil). Se pausa cuando el hero queda tapado o la pestaña está oculta. Con "reducir movimiento" o ahorro de datos se muestra solo el póster. El hero 3D anterior (WebGL) queda en el historial de git y en `v2/`.
 - **Globo y joya SVG:** 30 fps. La geometría se calcula una sola vez y solo se animan mientras están en pantalla.
 - **Gama baja / ahorro de datos / "reducir movimiento":** las animaciones se muestran como imagen fija.
 - **Scroll:** un único listener agrupado por frame. Se quitaron las animaciones CSS infinitas que repintaban y los `backdrop-filter` sobre el canvas.

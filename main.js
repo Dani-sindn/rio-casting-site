@@ -126,16 +126,22 @@
   /* ------------------------------------------------- hero: the casting film */
   // The film sits where the action is (right of the copy on desktop, above it on
   // phones) and is masked into the dark page so it never sits under the text.
-  // Its last moments are cross-faded into its first in the file itself, so it
-  // loops natively with no cut and no fade to black.
+  // The film tells a story (empty mould -> pour -> the R filled), so instead of a
+  // hard cut it fades out just before the end, restarts and fades back in.
   (() => {
     const wrap = $(".hero__video"), v = $("#heroVideo"), copy = $(".hero__in");
     if (!wrap || !v) return;
     const narrow = () => innerWidth <= 860;
+    const FADE = .9;                                   // seconds of fade before the restart
     if (LOW || reduce) { wrap.classList.add("is-still", "is-on"); return; }   // poster only
-    v.loop = true;
     v.src = narrow() ? v.dataset.srcSm : v.dataset.srcLg;
-    v.addEventListener("playing", () => wrap.classList.add("is-on"), { once: true });
+    let fading = false, raf = 0;
+    const watch = () => {
+      if (!fading && v.duration && v.currentTime > v.duration - FADE) { fading = true; wrap.classList.remove("is-on"); }
+      raf = v.paused ? 0 : requestAnimationFrame(watch);
+    };
+    v.addEventListener("playing", () => { wrap.classList.add("is-on"); if (!raf) raf = requestAnimationFrame(watch); });
+    v.addEventListener("ended", () => { fading = false; v.currentTime = 0; v.play().catch(() => {}); });
     // only play while the hero can be seen
     const onTop = () => scrollY < innerHeight * 1.02 || narrow() && scrollY < copy.getBoundingClientRect().bottom + scrollY;
     const sync = () => { if (document.hidden || !onTop()) { if (!v.paused) v.pause(); } else if (v.paused) v.play().catch(() => {}); };
