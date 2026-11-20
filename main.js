@@ -25,18 +25,7 @@
 
   /* ------------------------------------------------------------------ data */
   const G_PER_OZ = 31.1034768, G_PER_DWT = 1.55517384;
-  const UNITS = {
-    oz:  { label: "per troy ounce", f: 1 },
-    g:   { label: "per gram", f: 1 / G_PER_OZ },
-    dwt: { label: "per pennyweight", f: G_PER_DWT / G_PER_OZ },
-    kg:  { label: "per kilogram", f: 1000 / G_PER_OZ }
-  };
-  const SPOTS = [
-    { sym: "XAU", name: "Gold",      sw: "linear-gradient(135deg,#FFE7A8,#E0A93B 55%,#7A5212)" },
-    { sym: "XAG", name: "Silver",    sw: "linear-gradient(135deg,#FFFFFF,#D8DCE2 55%,#737A85)" },
-    { sym: "XPT", name: "Platinum",  sw: "linear-gradient(135deg,#F4F7FB,#B9C1CC 55%,#4D5563)" },
-    { sym: "XPD", name: "Palladium", sw: "linear-gradient(135deg,#F3F1EC,#BDB6A8 55%,#5A5448)" }
-  ];
+  const SYMS = ["XAU", "XAG", "XPT", "XPD"]; // reference feed (karat table, estimator, ticker, library)
   const KARATS = [["24K", .999], ["22K", .9167], ["18K", .750], ["14K", .585], ["10K", .417]];
 
   // Wax-to-metal multipliers assume a casting wax with specific gravity ≈ 1.0.
@@ -115,7 +104,6 @@
     return "$" + v.toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
   };
   const nyTime = (d) => d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" }) + " ET";
-  const nyDate = (d) => d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "America/New_York" });
   const store = {
     get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
@@ -208,82 +196,43 @@
   selectMetal(METALS[0]);
 
   /* ------------------------------------------------------------ metal desk */
-  let unit = "oz", lastPrices = {}, firstPrices = null, lastUpdate = null;
-  const spotsEl = $("#spots");
-  spotsEl.innerHTML = SPOTS.map(s => `
-    <article class="spot is-loading" data-sym="${s.sym}" style="--sw:${s.sw}">
-      <div class="spot__top"><i></i><b>${s.name}</b><small>${s.sym}</small></div>
-      <div class="spot__price" aria-live="polite">$0,000.00</div>
-      <div class="spot__unit">${UNITS[unit].label}</div>
-      <div class="spot__chg">&nbsp;</div>
-    </article>`).join("");
+  // Live quotes are Kitco's own chart images (refreshed on their side every minute or two):
+  // reload them every minute while the page is visible and stamp the time.
+  const kitcoImgs = $$("#kitco img"), kitcoStamp = $("#kitcoStamp");
+  const reloadKitco = () => {
+    kitcoImgs.forEach(img => { img.src = img.src.split("?")[0] + "?t=" + Date.now(); });
+  };
+  kitcoImgs.forEach(img => img.addEventListener("load", () => { kitcoStamp.textContent = "Updated " + nyTime(new Date()); }));
+  setInterval(() => { if (!document.hidden) reloadKitco(); }, 60000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) reloadKitco(); });
 
-  function renderSpots(flash) {
-    SPOTS.forEach(s => {
-      const el = $(`.spot[data-sym="${s.sym}"]`, spotsEl), v = prices[s.sym];
-      if (v == null) return;
-      el.classList.remove("is-loading");
-      const pe = $(".spot__price", el);
-      pe.textContent = usd(v * UNITS[unit].f);
-      $(".spot__unit", el).textContent = "USD " + UNITS[unit].label;
-      const chg = $(".spot__chg", el);
-      if (firstPrices && firstPrices[s.sym] && Math.abs(v - firstPrices[s.sym]) > 1e-6) {
-        const d = (v - firstPrices[s.sym]) / firstPrices[s.sym] * 100;
-        chg.className = "spot__chg " + (d >= 0 ? "up" : "down");
-        chg.textContent = `${d >= 0 ? "▲" : "▼"} ${Math.abs(d).toFixed(2)}% since you arrived`;
-      } else { chg.className = "spot__chg"; chg.textContent = lastUpdate ? (innerWidth < 560 ? "" : "Updated ") + nyTime(lastUpdate) : "Spot · USD"; }
-      if (flash && lastPrices[s.sym] && lastPrices[s.sym] !== v) {
-        pe.classList.add(v > lastPrices[s.sym] ? "flash-up" : "flash-down");
-        setTimeout(() => pe.classList.remove("flash-up", "flash-down"), 900);
-      }
-    });
+  // Reference spot feed: drives the karat table, the estimator, the header ticker and the library.
+  function renderPrices() {
     const g = prices.XAU;
     $("[data-nav-gold]").textContent = g ? usd(g, 0) : "—";
     $("#ktable tbody").innerHTML = KARATS.map(([k, f]) =>
-      `<tr><td>${k}</td><td>${(f * 1000).toFixed(f === .999 ? 1 : 1).replace(/\.0$/, "")}</td><td>${g ? usd(g / G_PER_OZ * f) : "—"}</td><td>${g ? usd(g / G_PER_OZ * G_PER_DWT * f) : "—"}</td></tr>`).join("");
+      `<tr><td>${k}</td><td>${(f * 1000).toFixed(1).replace(/\.0$/, "")}</td><td>${g ? usd(g / G_PER_OZ * f) : "—"}</td><td>${g ? usd(g / G_PER_OZ * G_PER_DWT * f) : "—"}</td></tr>`).join("");
     renderLibPrice(); calc();
   }
-  $$(".unit").forEach(b => b.addEventListener("click", () => {
-    unit = b.dataset.unit;
-    $$(".unit").forEach(x => { x.classList.toggle("is-on", x === b); x.setAttribute("aria-pressed", x === b); });
-    $$(".spot__unit").forEach(u => u.textContent = "USD " + UNITS[unit].label);
-    renderSpots(false);
-  }));
-
-  function setStatus(kind, text, when) {
-    $$("[data-status]").forEach(d => { d.className = "dot is-" + kind; });
-    $("#feedStatus").textContent = text;
-    $("#feedStamp").textContent = when ? `${nyDate(when)} · ${nyTime(when)}` : " ";
-  }
+  const setStatus = kind => $$("[data-status]").forEach(d => { d.className = "dot is-" + kind; });
 
   async function fetchPrices() {
     const base = (RIO.prices && RIO.prices.endpoint) || "https://api.gold-api.com/price/";
     try {
-      const res = await Promise.all(SPOTS.map(s =>
-        fetch(base + s.sym, { cache: "no-store" }).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })));
-      const next = {}; let latest = 0;
-      res.forEach((j, i) => {
-        if (typeof j.price === "number" && j.price > 0) next[SPOTS[i].sym] = j.price;
-        const t = Date.parse(j.updatedAt); if (t > latest) latest = t;
-      });
+      const res = await Promise.all(SYMS.map(sym =>
+        fetch(base + sym, { cache: "no-store" }).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })));
+      const next = {};
+      res.forEach((j, i) => { if (typeof j.price === "number" && j.price > 0) next[SYMS[i]] = j.price; });
       if (!Object.keys(next).length) throw new Error("empty");
-      lastPrices = { ...prices }; prices = next;
-      if (!firstPrices) firstPrices = { ...next };
-      const when = new Date(latest || Date.now()); lastUpdate = when;
-      store.set("rio-prices", { prices: next, at: when.getTime() });
-      setStatus("live", "Live market prices", when);
-      renderSpots(true);
+      prices = next;
+      store.set("rio-prices", { prices: next, at: Date.now() });
+      setStatus("live"); renderPrices();
     } catch (e) {
-      if (Object.keys(prices).length) { setStatus("stale", "Reconnecting — showing last update", null); return; }
+      if (Object.keys(prices).length) { setStatus("stale"); return; }
       const cached = store.get("rio-prices");
-      if (cached && cached.prices) {
-        prices = cached.prices;
-        setStatus("stale", "Live feed unavailable — last known prices", new Date(cached.at));
-        renderSpots(false);
-      } else {
-        setStatus("down", "Live feed unavailable — call us for today's price", null);
-        $$(".spot", spotsEl).forEach(el => { el.classList.remove("is-loading"); $(".spot__price", el).textContent = "—"; });
-      }
+      if (cached && cached.prices) { prices = cached.prices; setStatus("stale"); }
+      else setStatus("down");
+      renderPrices();
     }
   }
   fetchPrices();

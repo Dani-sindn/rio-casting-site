@@ -264,23 +264,18 @@ html:has(.capd[open]){overflow:hidden}
 .market__meta{justify-self:end;text-align:right;font:500 13px var(--mono)}
 .status{display:flex;align-items:center;gap:10px;justify-content:flex-end}
 .stamp{color:rgba(255,255,255,.5);margin-top:6px;font-size:12px}
-.units{display:inline-flex;padding:4px;border-radius:12px;border:1px solid var(--line-l);background:rgba(255,255,255,.04);margin-bottom:22px}
-.unit{height:36px;padding:0 16px;border-radius:8px;border:0;background:none;color:rgba(255,255,255,.65);font-size:13px;font-weight:500;cursor:pointer;transition:background .2s,color .2s}
-.unit.is-on{background:#fff;color:var(--ink)}
-.spots{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-.spot{position:relative;padding:24px;border-radius:var(--r);background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02));border:1px solid var(--line-l);overflow:hidden}
-.spot::after{content:"";position:absolute;inset:0 0 auto;height:3px;background:var(--sw)}
-.spot__top{display:flex;align-items:center;gap:10px}
-.spot__top i{flex:none;width:26px;height:26px;border-radius:50%;background:var(--sw);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
-.spot__top b{font-weight:600}
-.spot__top small{margin-left:auto;font:500 11px var(--mono);color:rgba(255,255,255,.45);letter-spacing:.08em}
-.spot__price{margin-top:22px;font:400 clamp(28px,2.6vw,36px)/1 var(--mono);letter-spacing:-.03em;font-variant-numeric:tabular-nums;transition:color .6s}
-.spot__price.flash-up{color:var(--up)}.spot__price.flash-down{color:var(--down)}
-.spot__unit{margin-top:8px;font-size:12.5px;color:rgba(255,255,255,.5)}
-.spot__chg{margin-top:14px;font:500 12px var(--mono);color:rgba(255,255,255,.55)}
-.spot__chg.up{color:var(--up)}.spot__chg.down{color:var(--down)}
-.spot.is-loading .spot__price{color:transparent;background:linear-gradient(90deg,rgba(255,255,255,.06),rgba(255,255,255,.14),rgba(255,255,255,.06));background-size:200% 100%;border-radius:8px;animation:shimmer 1.4s infinite;width:70%}
-@keyframes shimmer{to{background-position:-200% 0}}
+/* live quotes: Kitco's own chart images, framed as cards and linked back to kitco.com as Kitco requires */
+.kitco{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.kitco__card{position:relative;display:flex;flex-direction:column;gap:14px;padding:18px;border-radius:var(--r);background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02));border:1px solid var(--line-l);overflow:hidden;transition:border-color .25s,transform .3s var(--ease)}
+.kitco__card::after{content:"";position:absolute;inset:0 0 auto;height:3px;background:var(--sw)}
+.kitco__card:hover{border-color:rgba(255,162,77,.5);transform:translateY(-3px)}
+.kitco__top{display:flex;align-items:center;gap:10px}
+.kitco__top i{flex:none;width:24px;height:24px;border-radius:50%;background:var(--sw);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+.kitco__top b{font-weight:600}
+.kitco__top small{margin-left:auto;font:500 11px var(--mono);color:rgba(255,255,255,.45);letter-spacing:.08em}
+.kitco__img{display:grid;place-items:center;min-height:200px;border-radius:10px;background:#000;overflow:hidden}
+.kitco__img img{max-width:100%;height:auto}
+.kitco__go{font:500 12px var(--mono);color:var(--molten-hi);letter-spacing:.02em}
 .desk{display:grid;grid-template-columns:1fr 1.15fr;gap:14px;margin-top:14px}
 .karat,.calc{border-radius:var(--r);border:1px solid var(--line-l);padding:clamp(22px,3vw,34px);background:rgba(255,255,255,.03)}
 .karat .muted,.calc .muted{color:rgba(255,255,255,.55);font-size:14px;margin:8px 0 20px}
@@ -370,7 +365,7 @@ html:has(.capd[open]){overflow:hidden}
   .nav__links{display:none}
   .burger{display:block}
   .caps{grid-template-columns:repeat(2,1fr)}
-  .spots{grid-template-columns:repeat(2,1fr)}
+  .kitco{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (max-width:860px){
   .nav__tick{display:none}
@@ -420,8 +415,6 @@ html:has(.capd[open]){overflow:hidden}
   .capd .cap__ic{width:48px;height:48px}
   .capd__body p{font-size:16.5px}
   .capd__body ul{grid-template-columns:1fr}
-  .spots{grid-template-columns:1fr 1fr;gap:10px}
-  .spot{padding:18px}
   .lib__specs{grid-template-columns:1fr 1fr;gap:8px}
   .lib__grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
   .lib__ask{grid-column:span 2}
@@ -431,13 +424,11 @@ html:has(.capd[open]){overflow:hidden}
   .lib__swatch{min-height:150px}
   .spec{padding:10px 12px}
   .spec b{font-size:14px}
-  .spot__price{font-size:22px}
-  .spot__chg{font-size:10.5px}
-  .spot__top small{display:none}
   .calc__row,.calc__out,.form__row{grid-template-columns:1fr}
   .closing__row{grid-template-columns:1fr}
-  .units{display:flex;width:100%}
-  .unit{flex:1;padding:0 6px;font-size:12px}
+  .kitco{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin:0 calc(var(--gut) * -1);padding:0 var(--gut) 4px}
+  .kitco::-webkit-scrollbar{display:none}
+  .kitco__card{flex:none;width:258px;padding:16px;scroll-snap-align:center}
   .ktable th:nth-child(2),.ktable td:nth-child(2){display:none}
   .footer__in{grid-template-columns:1fr}
 }

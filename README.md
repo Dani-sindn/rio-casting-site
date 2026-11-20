@@ -23,7 +23,8 @@ Abrir http://localhost:4180. Se necesita un servidor (no `file://`) para que car
 Todo está en `config.js`: dirección, teléfono, email y el feed de precios.
 
 - **Formulario:** por ahora no envía nada; al pulsar "Send request" muestra una nota con el teléfono y el email. El envío real queda para la siguiente entrega.
-- **Precios:** vienen de `api.gold-api.com` (gratis, sin key, sin SLA) y se refrescan cada 60 s. Si falla, se muestran los últimos precios guardados en el navegador, marcados como "last known". Para producción conviene un proveedor con SLA (Metals-API, GoldAPI.io, etc.).
+- **Precios en vivo (Kitco):** el Metal desk muestra las gráficas oficiales de 24 h de Kitco (oro, plata, platino, paladio), que Kitco ofrece gratis como imágenes en kitconet.com/price con la condición de enlazar a `www.kitco.com/connecting.html`. Kitco no ofrece los números como datos (no hay API pública); para eso haría falta una licencia de datos con Kitco. El sitio recarga las imágenes cada minuto.
+- **Valores de referencia:** la tabla por kilate, el estimador, el precio del menú y los precios de la biblioteca se calculan con `api.gold-api.com` (gratis, sin key, sin SLA), cada 60 s, y están rotulados como referencia. Si falla, se usan los últimos precios guardados en el navegador.
 
 ## Secciones
 
@@ -32,7 +33,7 @@ Todo está en `config.js`: dirección, teléfono, email y el feed de precios.
 3. (Se eliminaron la franja de datos y la marquesina; esa info se repite más abajo.)
 4. Our Advantage (antes "Capabilities"): 4 cards con íconos propios y hover (Metal Casting, CAD Design + 3D Printing, Laser Scanning & Engraving, Finishing). Cada card muestra un extracto y un enlace "See more" que abre la card completa (subtítulo, textos y "Our Capabilities") en un modal (`<dialog>`, se cierra con la X, Esc o tocando fuera).
 5. Material library ("We can cast any precious & non-precious metal."): cuadrícula de 13 metales (Gold, Platinum, Sterling Silver, Palladium, Brass, Bronze, White Metal, Aluminum, Steel, Copper, Cobalt, Thai Gold, Gunmetal) más una celda "Another alloy? Ask us". Al elegir uno se muestra su ficha debajo (descripción, datos y precio spot si aplica). Los datos de cada metal están en `METALS` dentro de `main.js`.
-6. Metal desk: precios en vivo (oz / g / dwt / kg), oro por kilate y estimador de metal (cera → metal → valor).
+6. Metal desk: gráficas en vivo de Kitco (en móvil se deslizan de lado), oro por kilate y estimador de metal (cera → metal → valor) como valores de referencia.
 7. Cierre (Worldwide · Start a project): una sola sección con el globo animado de rutas desde NYC detrás, el texto de Worldwide, los datos de contacto y un formulario solo de contacto (nombre, empresa, email, teléfono y mensaje opcional). La sección "How it works" se eliminó.
 8. Footer.
 

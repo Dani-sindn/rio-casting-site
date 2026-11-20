@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400..700&family=Geist:wght@400..600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <link rel="preload" as="image" href="assets/video/hero-poster.jpg?v=2" />
-<link rel="stylesheet" href="styles.css?v=59" />
+<link rel="stylesheet" href="styles.css?v=61" />
 <script>document.documentElement.classList.add("js")</script>
 </head>
 <body>
@@ -214,28 +214,42 @@
   <div class="wrap">
     <div class="head head--split">
       <div>
-        <p class="eyebrow eyebrow--light"><span class="bar"></span>Metal desk · Updated live</p>
+        <p class="eyebrow eyebrow--light"><span class="bar"></span>Metal desk · Live from Kitco</p>
         <h2>Today's <em>precious metal</em> prices.</h2>
       </div>
       <div class="market__meta">
-        <p class="status"><i class="dot" data-status></i><span id="feedStatus">Connecting to market…</span></p>
-        <p class="stamp" id="feedStamp">&nbsp;</p>
+        <p class="status"><i class="dot is-live"></i><span>Live quotes by Kitco</span></p>
+        <p class="stamp" id="kitcoStamp">Refreshed every minute</p>
       </div>
     </div>
 
-    <div class="units" role="group" aria-label="Price unit">
-      <button class="unit is-on" data-unit="oz" aria-pressed="true">Troy oz</button>
-      <button class="unit" data-unit="g" aria-pressed="false">Gram</button>
-      <button class="unit" data-unit="dwt" aria-pressed="false">Pennyweight</button>
-      <button class="unit" data-unit="kg" aria-pressed="false">Kilo</button>
+    <div class="kitco" id="kitco">
+      <a class="kitco__card" href="https://www.kitco.com/connecting.html" target="_blank" rel="noopener" style="--sw:linear-gradient(135deg,#FFE7A8,#E0A93B 55%,#7A5212)">
+        <span class="kitco__top"><i></i><b>Gold</b><small>XAU</small></span>
+        <span class="kitco__img"><img src="https://www.kitconet.com/images/live/s_gold.gif" alt="24-hour gold spot price chart from Kitco" loading="lazy" /></span>
+        <span class="kitco__go">Live quote on kitco.com ↗</span>
+      </a>
+      <a class="kitco__card" href="https://www.kitco.com/connecting.html" target="_blank" rel="noopener" style="--sw:linear-gradient(135deg,#FFFFFF,#D8DCE2 55%,#737A85)">
+        <span class="kitco__top"><i></i><b>Silver</b><small>XAG</small></span>
+        <span class="kitco__img"><img src="https://www.kitconet.com/images/live/s_silv.gif" alt="24-hour silver spot price chart from Kitco" loading="lazy" /></span>
+        <span class="kitco__go">Live quote on kitco.com ↗</span>
+      </a>
+      <a class="kitco__card" href="https://www.kitco.com/connecting.html" target="_blank" rel="noopener" style="--sw:linear-gradient(135deg,#F4F7FB,#B9C1CC 55%,#4D5563)">
+        <span class="kitco__top"><i></i><b>Platinum</b><small>XPT</small></span>
+        <span class="kitco__img"><img src="https://www.kitconet.com/images/live/s_plat.gif" alt="24-hour platinum spot price chart from Kitco" loading="lazy" /></span>
+        <span class="kitco__go">Live quote on kitco.com ↗</span>
+      </a>
+      <a class="kitco__card" href="https://www.kitco.com/connecting.html" target="_blank" rel="noopener" style="--sw:linear-gradient(135deg,#F3F1EC,#BDB6A8 55%,#5A5448)">
+        <span class="kitco__top"><i></i><b>Palladium</b><small>XPD</small></span>
+        <span class="kitco__img"><img src="https://www.kitconet.com/images/live/s_plad.gif" alt="24-hour palladium spot price chart from Kitco" loading="lazy" /></span>
+        <span class="kitco__go">Live quote on kitco.com ↗</span>
+      </a>
     </div>
-
-    <div class="spots" id="spots"></div>
 
     <div class="desk">
       <div class="karat">
         <h3>Gold by karat</h3>
-        <p class="muted">Pure-metal value at today's spot, before alloy, labor and casting.</p>
+        <p class="muted">Pure-metal value at today's spot, before alloy, labor and casting. Reference values — Kitco has the official quote.</p>
         <table class="ktable" id="ktable">
           <thead><tr><th scope="col">Karat</th><th scope="col">Fineness</th><th scope="col">Per gram</th><th scope="col">Per dwt</th></tr></thead>
           <tbody></tbody>
@@ -264,7 +278,7 @@
         <p class="fine" id="calcNote">Approximate. Wax-to-metal ratios vary with alloy and wax type, and sprues add weight. Labor, casting and finishing are quoted separately.</p>
       </form>
     </div>
-    <p class="fine market__src">Spot prices in USD, sourced from a public market feed and refreshed every minute while this page is open. For reference only — your quotation confirms final pricing.</p>
+    <p class="fine market__src">Live charts by Kitco Metals Inc. (kitco.com), in USD per troy ounce, refreshed every minute while this page is open. The karat table, estimator and other prices on this site are reference values calculated from a public spot feed and may differ slightly from Kitco. Your quotation confirms final pricing.</p>
   </div>
 </section>
 
@@ -331,6 +345,6 @@
 </footer>
 
 <script src="config.js?v=46" defer></script>
-<script src="main.js?v=58" defer></script>
+<script src="main.js?v=60" defer></script>
 </body>
 </html>
