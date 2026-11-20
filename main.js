@@ -154,16 +154,17 @@
   let prices = {}; // sym -> USD per troy oz
   const grid = $("#libGrid"), panel = $("#libPanel");
   let libCurrent = METALS[0];
-  grid.innerHTML = METALS.map(m => `
-    <button class="lib__tile" type="button" data-metal="${m.id}" aria-pressed="false" aria-controls="libPanel">
-      <span class="lib__chip" style="--sw:${m.sw}"></span>
-      <span class="lib__name">${m.name}</span>
-      <small>${m.kicker === P ? "Precious" : "Non-precious"}</small>
-    </button>`).join("") + `
-    <a class="lib__ask" href="#start"><span>Another alloy?</span><b>Ask us →</b></a>`;
-  $$(".lib__tile", grid).forEach((b, i) => b.addEventListener("click", () => {
-    selectMetal(METALS[i]);
-    // on phones the sheet sits under the grid: bring it into view
+  // compact picker: one small chip per metal, grouped precious / non-precious
+  const chip = m => `<button class="lib__opt" type="button" data-metal="${m.id}" aria-pressed="false" aria-controls="libPanel"><i style="--sw:${m.sw}"></i><span>${m.name}</span></button>`;
+  grid.innerHTML = [[P, "Precious"], [NP, "Non-precious"]].map(([k, label]) => `
+    <div class="lib__group" role="group" aria-label="${label} metals">
+      <p class="lib__glabel">${label}</p>
+      <div class="lib__opts">${METALS.filter(m => m.kicker === k).map(chip).join("")}</div>
+    </div>`).join("") + `
+    <a class="lib__ask" href="#start">Another alloy? <b>Ask us →</b></a>`;
+  $$(".lib__opt", grid).forEach(b => b.addEventListener("click", () => {
+    selectMetal(METALS.find(m => m.id === b.dataset.metal));
+    // on phones the sheet sits under the picker: bring it into view
     const r = panel.getBoundingClientRect();
     if (r.top > innerHeight * .7 || r.bottom < 80) panel.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" });
   }));
@@ -182,7 +183,7 @@
     </div>`).join("");
   function selectMetal(m) {
     libCurrent = m;
-    $$(".lib__tile", grid).forEach(t => t.setAttribute("aria-pressed", t.dataset.metal === m.id));
+    $$(".lib__opt", grid).forEach(t => t.setAttribute("aria-pressed", t.dataset.metal === m.id));
     $("#libSwatch").style.setProperty("--sw", m.sw);
     $("#libSym").textContent = m.sym;
     $$(".lib__info", stack).forEach(el => { const on = el.dataset.metal === m.id; el.classList.toggle("is-on", on); el.setAttribute("aria-hidden", !on); });
